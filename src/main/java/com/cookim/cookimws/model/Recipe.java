@@ -1,0 +1,93 @@
+package com.cookim.cookimws.model;
+
+/**
+ *
+ * @author cookimadmin
+ */
+public class Recipe {
+    private long id;
+    private long id_user;
+    private String name;
+    private String description;
+    private String path_img;
+    private double rating;
+    private int likes;
+
+    public Recipe(long id, long id_user, String name, String description, String path_img, double rating, int likes) {
+        this.id = id;
+        this.id_user = id_user;
+        this.name = name;
+        this.description = description;
+        this.path_img = path_img;
+        this.rating = rating;
+        this.likes = likes;
+    }
+
+    public Recipe() {
+    }
+    
+    
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public long getId_user() {
+        return id_user;
+    }
+
+    public void setId_user(long id_user) {
+        this.id_user = id_user;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getPath_img() {
+        return path_img;
+    }
+
+    public void setPath_img(String path_img) {
+        this.path_img = path_img;
+    }
+
+    public double getRating() {
+        return rating;
+    }
+
+    public void setRating(double rating) {
+        this.rating = rating;
+    }
+
+    public int getLikes() {
+        return likes;
+    }
+
+    public void setLikes(int likes) {
+        this.likes = likes;
+    }
+
+    @Override
+    public String toString() {
+        return "Recipe{" + "id=" + id + ", id_user=" + id_user + ", name=" + name + ", description=" + description + ", path_img=" + path_img + ", rating=" + rating + ", likes=" + likes + '}';
+    }
+    
+    
+}
