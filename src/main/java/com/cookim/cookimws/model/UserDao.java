@@ -1,7 +1,6 @@
 package com.cookim.cookimws.model;
 
 import com.cookim.cookimws.connection.MariaDBConnection;
-import com.cookim.cookimws.utils.Utils;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -25,8 +24,8 @@ public class UserDao implements UserDaoInterface {
     public boolean add(User user) {
         try (Connection conn = MariaDBConnection.getConnection()) {
             PreparedStatement ps;
-            String query = "INSERT INTO user (username, password, full_name, email, phone, path_img, description, id_rol, token)"
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            String query = "INSERT INTO user (username, password, full_name, email, phone, path_img, description, id_rol)"
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             ps = conn.prepareStatement(query);
             ps.setString(1, user.getUsername());
             ps.setString(2, user.getPassword());
@@ -36,9 +35,9 @@ public class UserDao implements UserDaoInterface {
             ps.setString(6, user.getPath_img());
             ps.setString(7, user.getDescription());
             ps.setLong(8, user.getId_rol());
-            ps.setString(9, user.getToken());
             int rowsInserted = ps.executeUpdate(); //obtiene el numero de filas modificadas en la base de datos.
             ps.close();
+            System.out.println("new user" + user.getUsername() + " registered successfully");
             return rowsInserted > 0;
         } catch (Exception e) {
             System.out.println("failed to add user : " + e.toString());

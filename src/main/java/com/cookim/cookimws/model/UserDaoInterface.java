@@ -15,7 +15,6 @@ public interface UserDaoInterface {
       *
       * @param user The User object to add to the list.
       * @return true if the user was added successfully, false otherwise
-      * contrary.
       */
     public boolean add(User user);
     
@@ -42,8 +41,20 @@ public interface UserDaoInterface {
      */
     public User findUser(String username,String password);
     
+    /**
+     * method that searches the database for a user by his token.
+     * @param token the token with which the user will be searched.
+     * @return the user who has that token, if that token doesn't exist in the database it returns null.
+     */
     public User findUserByToken(String token);
     
+    /**
+     * method that assigns/updates a user's token.
+     * 
+     * @param user the user to assign the token to.
+     * @param token the token to be assigned to the user.
+     * @return true if the update was successful, false otherwise.
+     */
     public boolean updateUserToken(User user,String token);
     
 }

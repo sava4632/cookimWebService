@@ -82,7 +82,7 @@ public class Model {
         String token = Utils.getSHA256(username + password + new Random().nextInt(10000));
         if (u != null) {
             boolean isUpdateToken = daoUsers.updateUserToken(u,token);
-            System.out.println("isUpdateToken: " + isUpdateToken);
+            System.out.println("A new token has been assigned to the user: ".concat(u.getUsername()));
             if (isUpdateToken) {
                 result.setResult("user validated successfully");
                 result.setData(token);

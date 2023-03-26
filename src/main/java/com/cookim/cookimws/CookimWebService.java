@@ -15,7 +15,6 @@ import java.util.List;
 public class CookimWebService {
 
     public static void main(String[] args) {
-        // Connection conn = MariaDBConnection.getConnection();
         Model model = new Model();
 
         //HTTP
@@ -68,6 +67,29 @@ public class CookimWebService {
         });
 
         //POST
+        app.post("/register-new-user", ctx -> { //http://localhost:7070/register-new-user
+            String username = ctx.formParam("username");
+            String password = ctx.formParam("password");
+            String full_name = ctx.formParam("full_name");
+            String email = ctx.formParam("email");
+            String phone = ctx.formParam("phone");
+            String path_img = ctx.formParam("path_img");
+            String description = ctx.formParam("description");
+            String id_rolStr = ctx.formParam("id_rol");
+            long id_rol = Long.parseLong(id_rolStr);
+
+            User user = new User(username, password, full_name, email, phone, path_img, description, id_rol);
+
+            boolean result = model.addNewUser(user);
+
+            if (result) {
+                Gson gson = new Gson();
+                ctx.result("The user has been added successfully");
+            } else {
+                ctx.result("Failed to register new user");
+            }
+        });
+        
         app.post("/login", ctx -> { //http://localhost:7070/login
             String username = ctx.formParam("username");
             String password = ctx.formParam("password");
