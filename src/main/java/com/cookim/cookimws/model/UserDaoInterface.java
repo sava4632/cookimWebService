@@ -57,4 +57,6 @@ public interface UserDaoInterface {
      */
     public boolean updateUserToken(User user,String token);
     
+    public boolean deleteUser(String token);
+    
 }

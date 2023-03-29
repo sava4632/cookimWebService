@@ -27,21 +27,21 @@ public class Test {
 ////       DataResult dr = m.validateUser("admin", "admin");
 ////       System.out.println(dr.getResult() +"\n" + dr.getData());
         //listUsers();
-        addUser();
+        //addUser();
     }
 
-    private static void addUser() {
-        Model m = new Model();
-        System.out.println("Add new user...");
-        User user = getUserData();
-        boolean isAdded = m.addNewUser(user);
-        
-        if(isAdded){
-            System.out.println("New user added successfully!");
-        }else{
-            System.out.println("Failed to add new user.");
-        }
-    }
+//    private static void addUser() {
+//        Model m = new Model();
+//        System.out.println("Add new user...");
+//        User user = getUserData();
+//        boolean isAdded = m.addNewUser(user);
+//        
+//        if(isAdded){
+//            System.out.println("New user added successfully!");
+//        }else{
+//            System.out.println("Failed to add new user.");
+//        }
+//    }
     
     private static void listUsers() {
         Model m = new Model();

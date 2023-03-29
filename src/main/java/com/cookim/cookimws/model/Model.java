@@ -2,6 +2,7 @@ package com.cookim.cookimws.model;
 
 import com.cookim.cookimws.utils.DataResult;
 import com.cookim.cookimws.utils.Utils;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Random;
 
@@ -20,7 +21,6 @@ public class Model {
         //loadUsers();
     }
 
-   
     public List<User> getAllUsers() {
         return daoUsers.findAllUsers();
     }
@@ -33,47 +33,73 @@ public class Model {
         return daoUsers.findUser(username, password);
     }
     
-    public User getUserByToken(String token){
-        return daoUsers.findUserByToken(token);
+    /**
+     * 
+     * @param token
+     * @return 
+     */
+    public DataResult getUserByToken(String token) {
+        DataResult result = new DataResult();
+        User user = daoUsers.findUserByToken(token);
+        
+        if (user != null) {
+            result.setResult("1");
+            result.setData(user);
+        }
+        else{
+            result.setResult("0");
+            result.setData("Error: token could not be validated");
+        }
+        return result;
     }
-
-    public boolean addNewUser(User user) {
-        return daoUsers.add(user);
+    
+    /**
+     * 
+     * @param username
+     * @return 
+     */
+    public DataResult deleteUser(String token){
+        DataResult result = new DataResult();
+        boolean deleted = daoUsers.deleteUser(token);
+        if (deleted) {
+            result.setResult("1");
+            result.setData("User deleted successfully");
+        }
+        else{
+            result.setResult("0");
+            result.setData("Failed to try to delete user");
+        }
+        return result;
     }
 
     /**
-     *
-     * @param username
-     * @param password
-     * @return
+     * 
+     * @param user
+     * @return 
      */
-    /*public DataResult validateUser(String username, String password) {
+    public DataResult addNewUser(User user) {
         DataResult result = new DataResult();
-        User u = new User(username, password);
-        //boolean isValid = false;
-        
-        if (daoUsers.validate(u)) {
-            //isValid = true;
-            User user = getUser(u);
-            result.setResult("user validated successfully");           
-            result.setData(user);
+        boolean added = daoUsers.add(user);
+        if (added) {
+            result.setResult("1");
+            result.setData("The user has been added successfully");
         } else {
-            //isValid = false;
-            result.setResult("User not fount");
-            result.setData(null);
+            result.setResult("0");
+            result.setData("Failed to register new user");
         }
 
         return result;
-    }*/
-    
-    
+        //return daoUsers.add(user);
+    }
+
     /**
-     * validates a user in the database using the parameters provided by the client
-     * and if it is in the database it generates a new token
-     * 
+     * validates a user in the database using the parameters provided by the
+     * client and if it is in the database it generates a new token
+     *
      * @param username the username provided by the client
      * @param password the password provided by the client
-     * @return if it is true it returns the new token of the user, otherwise null
+     * @return if it is true it returns the new token of the user, otherwise
+     * null
      */
     public DataResult validateUser(String username, String password) {
         DataResult result = new DataResult();
@@ -81,15 +107,15 @@ public class Model {
         User u = getUser(username, password);
         String token = Utils.getSHA256(username + password + new Random().nextInt(10000));
         if (u != null) {
-            boolean isUpdateToken = daoUsers.updateUserToken(u,token);
+            boolean isUpdateToken = daoUsers.updateUserToken(u, token);
             System.out.println("A new token has been assigned to the user: ".concat(u.getUsername()));
             if (isUpdateToken) {
-                result.setResult("user validated successfully");
+                result.setResult("1");
                 result.setData(token);
             }
         } else {
-            result.setResult("User not found");
-            result.setData(null);
+            result.setResult("0");
+            result.setData("User not found");
         }
 
         return result;

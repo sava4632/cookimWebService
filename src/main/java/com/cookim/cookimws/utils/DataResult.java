@@ -6,7 +6,6 @@ package com.cookim.cookimws.utils;
  */
 public class DataResult {
     public String result;
-    public String result2;
     public Object data;
     
     
@@ -15,20 +14,9 @@ public class DataResult {
         data = "";
     }
 
-    public DataResult(String result, String result2) {
+    public DataResult(String result) {
         this.result = result;
-        this.result2 = result2;
     }
-
-    public String getResult2() {
-        return result2;
-    }
-
-    public void setResult2(String result2) {
-        this.result2 = result2;
-    }
-    
-    
 
     public String getResult() {
         return result;

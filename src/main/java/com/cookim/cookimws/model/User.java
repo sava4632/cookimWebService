@@ -1,5 +1,9 @@
 package com.cookim.cookimws.model;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+
 /**
  *
  * @author cookimadmin
@@ -138,7 +142,17 @@ public class User {
         return "User{" + "id=" + id + ", username=" + username + ", password=" + password + ", full_name=" + full_name + ", email=" + email + ", phone=" + phone + ", path_img=" + path_img + ", description=" + description + ", id_rol=" + id_rol + ", token=" + token + '}';
     }
 
-    
-    
-    
+    /*public byte[] getImage() {
+    try {
+        FileInputStream fileInputStream = new FileInputStream(new File(this.path_img));
+        byte[] bytes = new byte[fileInputStream.available()];
+        fileInputStream.read(bytes);
+        fileInputStream.close();
+        return bytes;
+    } catch (IOException e) {
+        e.printStackTrace();
+        return null;
+    }*/
 }
+
+    

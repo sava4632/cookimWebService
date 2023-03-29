@@ -37,10 +37,27 @@ public class UserDao implements UserDaoInterface {
             ps.setLong(8, user.getId_rol());
             int rowsInserted = ps.executeUpdate(); //obtiene el numero de filas modificadas en la base de datos.
             ps.close();
-            System.out.println("new user" + user.getUsername() + " registered successfully");
+            System.out.println("new user " + user.getUsername() + " registered successfully");
             return rowsInserted > 0;
         } catch (Exception e) {
             System.out.println("failed to add user : " + e.toString());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean deleteUser(String token) {
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            PreparedStatement ps;
+
+            String query = "DELETE FROM user WHERE token = ?";
+            ps = conn.prepareStatement(query);
+            ps.setString(1, token);
+            int rowsDeleted = ps.executeUpdate();
+            ps.close();
+            return rowsDeleted > 0;
+        } catch (Exception e) {
+            System.out.println("failed to delete user : " + e.toString());
             return false;
         }
     }
@@ -158,10 +175,10 @@ public class UserDao implements UserDaoInterface {
 
             // Check if the query result is empty
             if (!rs.isBeforeFirst()) {
-                System.out.println("User with this token not found");
+                System.out.println("User with this token not found in database");
                 return null; // or you can return a special User object indicating that the user was not found
             }
-            
+
             if (rs != null && rs.next()) {
                 user = new User();
                 user.setId(rs.getLong("id"));
