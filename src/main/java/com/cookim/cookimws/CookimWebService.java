@@ -107,6 +107,7 @@ public class CookimWebService {
             }
         });
 
+        
         app.post("/Cookim/autologin", ctx -> { //http://localhost:7070/Cookim/autologin
             //String token = ctx.formParam("token");
             String token = ctx.header("Authorization").replace("Bearer ", "");
