@@ -49,8 +49,6 @@ public class CookimWebService {
             ctx.result(gson.toJson(recipesList));
         });
 
-        
-
         //POST
         app.post("/Cookim/my-profile/delete-account", ctx -> { //http://localhost:7070/Cookim/my-profile/delete-account
             String token = ctx.header("Authorization").replace("Bearer ", "");
@@ -66,8 +64,7 @@ public class CookimWebService {
                 ctx.result(gson.toJson(result));
             }
         });
-        
-        
+
         app.post("/Cookim/sign-in", ctx -> { //http://localhost:7070/Cookim/sign-in
             String username = ctx.formParam("username");
             String password = ctx.formParam("password");
@@ -108,6 +105,19 @@ public class CookimWebService {
                 Gson gson = new Gson();
                 ctx.result(gson.toJson(result));
             }
+        });
+
+        app.post("/Cookim/autologin", ctx -> { //http://localhost:7070/Cookim/autologin
+            //String token = ctx.formParam("token");
+            String token = ctx.header("Authorization").replace("Bearer ", "");
+            System.out.println("the user with the token: " + token + " tries to get into his profile...");
+
+            DataResult result = model.getUserByToken(token);
+
+            System.out.println("The user with the token: " + token + " goes to his profile");
+            Gson gson = new Gson();
+            ctx.result(gson.toJson(result));
+
         });
 
     }
