@@ -25,9 +25,7 @@ public class Model {
         return daoUsers.findAllUsers();
     }
 
-    public List<Recipe> getAllRecipes() {
-        return recipeDao.findAllRecipes();
-    }
+  
 
     public User getUser(String username, String password) {
         return daoUsers.findUser(username, password);
@@ -71,6 +69,20 @@ public class Model {
         }
         return result;
     }
+    
+    public DataResult modifyUser(User user){
+        DataResult result = new DataResult();
+        boolean modified = daoUsers.modifyUser(user);
+        
+        if (modified) {
+            result.setResult("1");
+            result.setData("User modified successfully");
+        } else {
+            result.setResult("0");
+            result.setData("Error when trying to modify the user");
+        }
+        return result;
+    }
 
     /**
      * 
@@ -90,6 +102,19 @@ public class Model {
 
         return result;
         //return daoUsers.add(user);
+    }
+    
+    public DataResult autoLogin(String token){
+        DataResult result = new DataResult();
+        boolean autologed = daoUsers.autoLogin(token);
+        if (autologed) {
+            result.setResult("1");
+            result.setData("user has successfully autologin");
+        } else {
+            result.setResult("0");
+            result.setData("Failed to autologin");
+        }
+        return result;
     }
 
     /**
@@ -118,6 +143,23 @@ public class Model {
             result.setData("User not found");
         }
 
+        return result;
+    }
+    
+   
+    //--------------------------------------------------RECIPES-------------------------------------------------------------
+
+    public DataResult getAllRecipes() {
+        DataResult result = new DataResult();
+        List<Recipe> recipes = recipeDao.findAllRecipes();
+        
+        if (recipes != null) {
+            result.setResult("1");
+            System.out.println(recipes);
+        } else {
+            result.setResult("0");
+            result.setData("Failed to get reciepes");
+        }
         return result;
     }
 }

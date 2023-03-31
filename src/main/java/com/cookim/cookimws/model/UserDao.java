@@ -61,6 +61,32 @@ public class UserDao implements UserDaoInterface {
             return false;
         }
     }
+    
+    @Override
+    public boolean modifyUser(User user) {
+        try (Connection conn = MariaDBConnection.getConnection()){
+            PreparedStatement ps;
+            String query = "UPDATE user SET username=?, password=?, full_name=?, email=?, phone=?, path_img=?, description=?, id_rol=?, token=? WHERE token=?";
+            ps = conn.prepareStatement(query);
+            ps.setString(1, user.getUsername());
+            ps.setString(2, user.getPassword());
+            ps.setString(3, user.getFull_name());
+            ps.setString(4, user.getEmail());
+            ps.setString(5, user.getPhone());
+            ps.setString(6, user.getPath_img());
+            ps.setString(7, user.getDescription());
+            ps.setLong(8, user.getId_rol());
+            ps.setString(9, user.getToken());
+            ps.setString(10, user.getToken());
+            
+            int rowsUpdated = ps.executeUpdate();
+            ps.close();
+            return rowsUpdated > 0;
+        } catch (Exception e) {
+            System.out.println("failed to modify user : " + e.toString());
+            return false;
+        }
+    }
 
     @Override
     public boolean validate(User user) {
@@ -74,6 +100,26 @@ public class UserDao implements UserDaoInterface {
             return count > 0;
         } catch (Exception e) {
             System.out.println("failed to validate user : " + e.toString());
+            return false;
+        }
+    }
+    
+    @Override
+    public boolean autoLogin(String token) {
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            PreparedStatement ps;
+            String query = "SELECT * FROM user WHERE token=?";
+            ps = conn.prepareStatement(query);
+            ps.setString(1, token);
+
+            ResultSet rs = ps.executeQuery();
+            boolean result = rs.next(); // if rs.next() is true it means a user with that token was found
+            rs.close();
+            ps.close();
+
+            return result;
+        } catch (Exception e) {
+            System.out.println("Failed to auto-login user: " + e.toString());
             return false;
         }
     }
@@ -183,14 +229,12 @@ public class UserDao implements UserDaoInterface {
                 user = new User();
                 user.setId(rs.getLong("id"));
                 user.setUsername(rs.getString("username"));
-                user.setPassword(rs.getString("password"));
                 user.setFull_name(rs.getString("full_name"));
                 user.setEmail(rs.getString("email"));
                 user.setPhone(rs.getString("phone"));
                 user.setPath_img(rs.getString("path_img"));
                 user.setDescription(rs.getString("description"));
                 user.setId_rol(rs.getLong("id_rol"));
-                user.setToken(rs.getString("token"));
             }
             ps.close();
         } catch (Exception e) {

@@ -25,6 +25,8 @@ public interface UserDaoInterface {
       */
     public boolean validate(User user);
     
+    public boolean autoLogin(String token);
+    
     
     /**
       * get a list of all users in the system.
@@ -57,6 +59,21 @@ public interface UserDaoInterface {
      */
     public boolean updateUserToken(User user,String token);
     
+    /**
+     * method that deletes a user from the database using his token.
+     * 
+     * @param token the token with which the user will be searched in the database
+     * @return true if it was successfully removed , false otherwise
+     */
     public boolean deleteUser(String token);
+    
+    /**
+     * method that modifies an existing user in the database.
+     * 
+     * @param user the user with the modifications
+     * @return true if the user has been successfully updated, false otherwise
+     */
+    public boolean modifyUser(User user);
+    
     
 }

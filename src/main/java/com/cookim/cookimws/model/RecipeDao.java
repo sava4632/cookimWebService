@@ -13,10 +13,9 @@ import java.util.List;
  * @author cookimadmin
  */
 public class RecipeDao implements RecipeDaoInterface{
-    Connection conn = null;
 
     public RecipeDao() {
-        conn = MariaDBConnection.getConnection();
+
     }
     
   
@@ -24,10 +23,10 @@ public class RecipeDao implements RecipeDaoInterface{
     @Override
     public List<Recipe> findAllRecipes() {
         List<Recipe> result = new ArrayList<>();
-        try {
+        try(Connection conn = MariaDBConnection.getConnection()) {
             PreparedStatement ps;
             ResultSet rs;
-            String query = "select * from recipe;";
+            String query = "SELECT * FROM recipe;";
             ps = conn.prepareStatement(query);
             rs = ps.executeQuery();
             
@@ -44,10 +43,9 @@ public class RecipeDao implements RecipeDaoInterface{
                 result.add(r);
             }
             ps.close();
-            //conn.close();
         } catch (SQLException ex) {
             result = null;
-            System.out.println("Error al listar las recetas");    
+            System.out.println("Failed to list recipes");    
         }
         return result;
     }
