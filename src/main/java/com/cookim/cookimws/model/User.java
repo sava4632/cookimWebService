@@ -55,6 +55,16 @@ public class User {
         this.id_rol = id_rol;
         this.token = token;
     }
+
+    public User(String username, String password, String full_name, String email, String phone, String path_img, long id_rol) {
+        this.username = username;
+        this.password = password;
+        this.full_name = full_name;
+        this.email = email;
+        this.phone = phone;
+        this.path_img = path_img;
+    }
+    
     
     
 

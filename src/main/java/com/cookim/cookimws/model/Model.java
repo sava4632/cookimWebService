@@ -2,7 +2,6 @@ package com.cookim.cookimws.model;
 
 import com.cookim.cookimws.utils.DataResult;
 import com.cookim.cookimws.utils.Utils;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Random;
 
@@ -13,11 +12,11 @@ import java.util.Random;
 public class Model {
 
     UserDaoInterface daoUsers;
-    RecipeDaoInterface recipeDao;
+    RecipeDaoInterface daoRecipe;
 
     public Model() {
         daoUsers = new UserDao();
-        recipeDao = new RecipeDao();
+        daoRecipe = new RecipeDao();
         //loadUsers();
     }
 
@@ -25,55 +24,51 @@ public class Model {
         return daoUsers.findAllUsers();
     }
 
-  
-
     public User getUser(String username, String password) {
         return daoUsers.findUser(username, password);
     }
-    
+
     /**
-     * 
+     *
      * @param token
-     * @return 
+     * @return
      */
     public DataResult getUserByToken(String token) {
         DataResult result = new DataResult();
         User user = daoUsers.findUserByToken(token);
-        
+
         if (user != null) {
             result.setResult("1");
             result.setData(user);
-        }
-        else{
+        } else {
             result.setResult("0");
             result.setData("Error: token could not be validated");
         }
         return result;
     }
-    
+
     /**
-     * 
+     *
      * @param username
-     * @return 
+     * @return
      */
-    public DataResult deleteUser(String token){
+    public DataResult deleteUser(String token) {
         DataResult result = new DataResult();
         boolean deleted = daoUsers.deleteUser(token);
         if (deleted) {
             result.setResult("1");
             result.setData("User deleted successfully");
-        }
-        else{
+        } else {
             result.setResult("0");
             result.setData("Failed to try to delete user");
         }
         return result;
     }
-    
-    public DataResult modifyUser(User user){
+
+    public DataResult modifyUser(User user) {
         DataResult result = new DataResult();
         boolean modified = daoUsers.modifyUser(user);
-        
+
         if (modified) {
             result.setResult("1");
             result.setData("User modified successfully");
@@ -85,9 +80,9 @@ public class Model {
     }
 
     /**
-     * 
+     *
      * @param user
-     * @return 
+     * @return
      */
     public DataResult addNewUser(User user) {
         DataResult result = new DataResult();
@@ -103,8 +98,8 @@ public class Model {
         return result;
         //return daoUsers.add(user);
     }
-    
-    public DataResult autoLogin(String token){
+
+    public DataResult autoLogin(String token) {
         DataResult result = new DataResult();
         boolean autologed = daoUsers.autoLogin(token);
         if (autologed) {
@@ -145,16 +140,39 @@ public class Model {
 
         return result;
     }
-    
-   
-    //--------------------------------------------------RECIPES-------------------------------------------------------------
 
+    public DataResult getUserProfileImage(String token) {
+        DataResult result = new DataResult();
+        User user = daoUsers.findUserByToken(token);
+        String imageUrl = "http://192.168.127.80/users";
+
+        if (user != null) {
+            if (user.getPath_img().equals("")) {
+                result.setResult("2");
+                result.setData(imageUrl.concat("/default"));
+            } else if (user.getPath_img() != null) {
+                result.setResult("1");
+                result.setData(imageUrl.concat(user.getPath_img()));
+            } else {
+                result.setResult("0");
+                result.setData("Failed when trying to load the image");
+            }
+        }else{
+            result.setResult("0");
+            result.setData("Failed when trying to load the image - validate token");
+        }
+
+        return result;
+    }
+
+    //--------------------------------------------------RECIPES-------------------------------------------------------------
     public DataResult getAllRecipes() {
         DataResult result = new DataResult();
-        List<Recipe> recipes = recipeDao.findAllRecipes();
-        
+        List<Recipe> recipes = daoRecipe.findAllRecipes();
+
         if (recipes != null) {
             result.setResult("1");
+            result.setData(recipes);
             System.out.println(recipes);
         } else {
             result.setResult("0");
@@ -162,4 +180,65 @@ public class Model {
         }
         return result;
     }
+
+    public DataResult getAllRecipesByCategory(String idCategory) {
+        DataResult result = new DataResult();
+        List<Recipe> recipes = daoRecipe.findAllRecipesByCategory(idCategory);
+
+        if (recipes.isEmpty()) {
+            result.setResult("2");
+            result.setData("Empty recipe list");
+        } else if (recipes != null) {
+            result.setResult("1");
+            result.setData(recipes);
+        } else {
+            result.setResult("0");
+            result.setData("Failed to get reciepes by category");
+        }
+        return result;
+    }
+
+    public DataResult addNewRecipe(Recipe recipe) {
+        DataResult result = new DataResult();
+        boolean added = daoRecipe.addRecipe(recipe);
+
+        if (added) {
+            result.setResult("1");
+            result.setData("Recipe added successfully");
+        } else {
+            result.setResult("0");
+            result.setData("Failed when trying to add a new recipe");
+        }
+        return result;
+    }
+
+    public DataResult deleteRecipe(String id) {
+        DataResult result = new DataResult();
+        boolean removed = daoRecipe.deleteRecipe(id);
+
+        if (removed) {
+            result.setResult("1");
+            result.setData("Recipe removed successfully");
+        } else {
+            result.setResult("0");
+            result.setData("Failed when trying to remove recipe");
+        }
+        return result;
+    }
+
+    public DataResult modifyRecipe(Recipe recipe) {
+        DataResult result = new DataResult();
+        boolean modified = daoRecipe.modifyRecipe(recipe);
+
+        if (modified) {
+            result.setResult("1");
+            result.setData("Recipe modified successfully");
+        } else {
+            result.setResult("0");
+            result.setData("Failed when trying to modify recipe");
+        }
+        return result;
+    }
+
+    //-------------------------------------CATEGORIES-------------------------------------------------
 }

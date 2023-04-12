@@ -23,6 +23,17 @@ public class Recipe {
         this.likes = likes;
     }
 
+    public Recipe(long id_user, String name, String description, String path_img, double rating, int likes) {
+        this.id_user = id_user;
+        this.name = name;
+        this.description = description;
+        this.path_img = path_img;
+        this.rating = rating;
+        this.likes = likes;
+    }
+    
+    
+
     public Recipe() {
     }
     
