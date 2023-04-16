@@ -33,5 +33,10 @@ public class DataResult {
     public void setData(Object data) {
         this.data = data;
     }
+
+    @Override
+    public String toString() {
+        return "DataResult{" + "result=" + result + ", data=" + data + '}';
+    }
     
 }

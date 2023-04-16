@@ -12,6 +12,7 @@ public class Recipe {
     private String path_img;
     private double rating;
     private int likes;
+    private String user_name;
 
     public Recipe(long id, long id_user, String name, String description, String path_img, double rating, int likes) {
         this.id = id;
@@ -31,6 +32,19 @@ public class Recipe {
         this.rating = rating;
         this.likes = likes;
     }
+
+    //Contructor for home page recipes 
+    public Recipe(long id, long id_user, String name, String description, String path_img, double rating, int likes, String user_name) {
+        this.id = id;
+        this.id_user = id_user;
+        this.name = name;
+        this.description = description;
+        this.path_img = path_img;
+        this.rating = rating;
+        this.likes = likes;
+        this.user_name = user_name;
+    }
+    
     
     
 
@@ -94,6 +108,16 @@ public class Recipe {
     public void setLikes(int likes) {
         this.likes = likes;
     }
+
+    public String getUser_name() {
+        return user_name;
+    }
+
+    public void setUser_name(String user_name) {
+        this.user_name = user_name;
+    }
+    
+    
 
     @Override
     public String toString() {

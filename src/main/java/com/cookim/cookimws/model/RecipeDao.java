@@ -150,6 +150,40 @@ public class RecipeDao implements RecipeDaoInterface{
         return recipes;
     }
 
+    @Override
+    public List<Recipe> findAllRecipesWithUser() {
+        List<Recipe> result = new ArrayList<>();
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            PreparedStatement ps;
+            ResultSet rs;
+            String query = "SELECT recipe.id, recipe.id_user, recipe.name, recipe.description, "
+                    + "recipe.path_img, recipe.rating, recipe.likes, user.username "
+                    + "FROM recipe JOIN user ON recipe.id_user = user.id;";
+            ps = conn.prepareStatement(query);
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Recipe recipe = new Recipe();
+                recipe.setId(rs.getLong("id"));
+                recipe.setId_user(rs.getLong("id_user"));
+                recipe.setName(rs.getString("name"));
+                recipe.setDescription(rs.getString("description"));
+                recipe.setPath_img(rs.getString("path_img"));
+                recipe.setRating(rs.getFloat("rating"));
+                recipe.setLikes(rs.getInt("likes"));
+                recipe.setUser_name(rs.getString("username"));
+                result.add(recipe);
+            }
+            ps.close();
+        } catch (SQLException ex) {
+            result = null;
+            System.out.println("Failed to list recipes");
+        }
+        return result;
+    }
+
+    
+
     
 
    

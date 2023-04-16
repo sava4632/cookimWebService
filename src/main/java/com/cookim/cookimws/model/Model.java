@@ -2,8 +2,15 @@ package com.cookim.cookimws.model;
 
 import com.cookim.cookimws.utils.DataResult;
 import com.cookim.cookimws.utils.Utils;
+import io.javalin.http.UploadedFile;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 
 /**
  *
@@ -29,9 +36,9 @@ public class Model {
     }
 
     /**
-     *
-     * @param token
-     * @return
+     *Method that gets a user from the database for their token.
+     * @param token the token of the user to look up
+     * @return 1 if the user has been found in the database, 0 otherwise.
      */
     public DataResult getUserByToken(String token) {
         DataResult result = new DataResult();
@@ -80,25 +87,40 @@ public class Model {
     }
 
     /**
-     *
-     * @param user
-     * @return
+     *Method that adds a new user to the database and assigns him his first token.
+     * 
+     * @param user the user to add to the database.
+     * @return 1 y el token si el usuario se ha añadido correctamente, 0 en el caso contrario.
      */
     public DataResult addNewUser(User user) {
         DataResult result = new DataResult();
         boolean added = daoUsers.add(user);
+        User u = getUser(user.getUsername(), user.getPassword());
+
         if (added) {
-            result.setResult("1");
-            result.setData("The user has been added successfully");
+            String token = Utils.getSHA256(u.getUsername() + u.getPassword() + new Random().nextInt(10000));
+            
+            boolean isUpdateToken = daoUsers.updateUserToken(u, token);
+            if (isUpdateToken) {
+                result.setResult("1");
+                result.setData(token);
+            } else{
+                result.setResult("2");
+                result.setData("Failed to validate token");
+            }
         } else {
             result.setResult("0");
             result.setData("Failed to register new user");
         }
 
         return result;
-        //return daoUsers.add(user);
     }
-
+    
+    /**
+     * Method that verifies if the token sent by the client exists in the database so that the user session is not closed.
+     * @param token the token of the user who does the autologin
+     * @return 1 if the auto login is successful, 0 otherwise
+     */
     public DataResult autoLogin(String token) {
         DataResult result = new DataResult();
         boolean autologed = daoUsers.autoLogin(token);
@@ -164,6 +186,40 @@ public class Model {
 
         return result;
     }
+    
+    /**
+     * Method that receives an image from the client and stores it in a local location on the server.
+     * @param file the file to save on the server
+     * @return 1 if the image was saved correctly, 2 if the file does not meet the required extension or 0 if the image cannot be added.
+     */
+    public DataResult setUserProfileImage(UploadedFile file) {
+        DataResult result = new DataResult();
+
+        try {
+            //Verify that the file has a .jpg extension
+            if (!FilenameUtils.getExtension(file.filename()).equalsIgnoreCase("jpg")) {
+                result.setResult("2");
+                result.setData("Only jpg files can be uploaded");
+                return result;
+            }
+            
+            FileUtils.copyInputStreamToFile(file.content(), new File("C:\\Users\\Samuel\\Desktop\\CookimUpload\\binary\\" + file.filename()));
+            File uploadedFile = new File("C:\\Users\\Samuel\\Desktop\\CookimUpload\\binary\\" + file.filename());
+
+            if (uploadedFile.exists()) {
+                result.setResult("1");
+                result.setData("Image saved successfully");
+            } else {
+                result.setResult("0");
+                result.setData("Can't save image to server");
+            }
+        } catch (IOException ex) {
+            System.out.println("Error POST FILE:" + ex.toString());
+            result.setResult("0");
+            result.setData("Failed when trying to upload the image to server");
+        }
+        return result;
+    }
 
     //--------------------------------------------------RECIPES-------------------------------------------------------------
     public DataResult getAllRecipes() {
@@ -197,7 +253,37 @@ public class Model {
         }
         return result;
     }
+    
+    /**
+     * A method that fetches all recipes with their publishers.
+     * 
+     * @return 2 if the database list is empty, 1 if the recipes could be listed correctly and 0 otherwise.
+     */
+    public DataResult getAllRecipesWithUser() {
+        DataResult result = new DataResult();
+        List<Recipe> recipes = daoRecipe.findAllRecipesWithUser();
 
+        if (recipes.isEmpty()) {
+            result.setResult("2");
+            result.setData("Empty recipe list");
+        } else if (recipes != null) {
+            result.setResult("1");
+            result.setData(recipes);
+        } else {
+            result.setResult("0");
+            result.setData("Failed to get all users reciepes");
+        }
+        return result;
+    }
+    
+    /**
+     * method that receives the token from the user who wants to add a new recipe, 
+     * if that token is valid in the database it will take the attributes of the recipe sent 
+     * by the user and create a new recipe to be added to the database.
+     * 
+     * @param recipe the new recipe to add
+     * @return 1 if the recipe was added successfully, 0 otherwise
+     */
     public DataResult addNewRecipe(Recipe recipe) {
         DataResult result = new DataResult();
         boolean added = daoRecipe.addRecipe(recipe);
@@ -211,7 +297,13 @@ public class Model {
         }
         return result;
     }
-
+    
+    /**
+     * Method that removes a recipe from the database .
+     * 
+     * @param id the id of the recipe to delete
+     * @return 1 if the recipe was added successfully, 0 otherwise
+     */
     public DataResult deleteRecipe(String id) {
         DataResult result = new DataResult();
         boolean removed = daoRecipe.deleteRecipe(id);
@@ -226,6 +318,12 @@ public class Model {
         return result;
     }
 
+    /**
+     * Method to modify an already existing line in the database.
+     * 
+     * @param recipe the modified recipe 
+     * @return 1 if the recipe is modified successfully, 0 otherwise
+     */
     public DataResult modifyRecipe(Recipe recipe) {
         DataResult result = new DataResult();
         boolean modified = daoRecipe.modifyRecipe(recipe);

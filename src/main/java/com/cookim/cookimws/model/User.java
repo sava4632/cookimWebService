@@ -63,6 +63,7 @@ public class User {
         this.email = email;
         this.phone = phone;
         this.path_img = path_img;
+        this.id_rol = id_rol;
     }
     
     
