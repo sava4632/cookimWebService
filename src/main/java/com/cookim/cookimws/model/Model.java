@@ -57,7 +57,7 @@ public class Model {
     }
 
     /**
-     * Method that gets a user from the database for their token and ends the 
+     * Method that gets a user from the database for their token and ends the
      * session of the user bay removings his token.
      *
      * @param token the token of the user to look up
@@ -72,8 +72,7 @@ public class Model {
             if (finished) {
                 result.setResult("1");
                 result.setData("The user session is finished");
-            }
-            else{
+            } else {
                 result.setResult("0");
                 result.setData("The user session was'nt finished");
             }
@@ -276,16 +275,25 @@ public class Model {
     }
 
     public DataResult likeRecipe(int num, String id) {
-        DataResult result = null;
+        DataResult result = new DataResult();
 
-        Boolean response = daoRecipe.likeRecipe(num, id);
         Recipe recipe = daoRecipe.findRecipeById(id);
-        if (response) {
-            result.setResult("1");
-            result.setData(recipe.getLikes());
+        
+        if (recipe != null) {
+            System.out.println("Recipe founded");
+            System.out.println("like Intent");
+            Boolean response = daoRecipe.likeRecipe(num, recipe);
+            if (response) {
+                result.setResult("1");
+                result.setData(recipe.getLikes());
+            } else {
+                result.setResult("0");
+                result.setData("recipe not updated");
+            }
+
         } else {
-            result.setResult("0");
-            result.setData("recipe not updated");
+            result.setResult("2");
+            result.setData("recipe not found");
         }
 
         return result;

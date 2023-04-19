@@ -93,15 +93,14 @@ public class RecipeDao implements RecipeDaoInterface {
         }
         return result;
     }
-    
+
     @Override
-    public boolean likeRecipe(int num, String id) {
-        Recipe recipe = findRecipeById(id);
-        
+    public boolean likeRecipe(int num, Recipe recipe) {
+
         if (num == 1) {
-            recipe.setLikes(recipe.getLikes() +1); 
-        }else{
-            recipe.setLikes(recipe.getLikes()-1 );
+            recipe.setLikes(recipe.getLikes() + 1);
+        } else {
+            recipe.setLikes(recipe.getLikes() - 1);
         }
         // incrementar el número de likes de la receta
         boolean result = false;
@@ -222,7 +221,7 @@ public class RecipeDao implements RecipeDaoInterface {
     public Recipe findRecipeById(String id) {
         Recipe recipe = null;
         try ( Connection conn = MariaDBConnection.getConnection()) {
-            String query = "SELECT recipe FROM recipe WHERE id = ?";
+            String query = "SELECT * FROM recipe WHERE id = ?";
             PreparedStatement ps = conn.prepareStatement(query);
             ps.setString(1, id);
             ResultSet rs = ps.executeQuery();
