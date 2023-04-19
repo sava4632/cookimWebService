@@ -13,6 +13,8 @@ public interface RecipeDaoInterface {
     public List<Recipe> findAllRecipesWithUser();
     public boolean  addRecipe(Recipe recipe);
     public boolean deleteRecipe(String id);
+    public boolean likeRecipe(int num, String id);
     public boolean modifyRecipe(Recipe recipe);
+    public Recipe findRecipeById(String id);
     
 }

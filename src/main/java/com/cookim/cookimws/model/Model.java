@@ -24,6 +24,7 @@ public class Model {
     public Model() {
         daoUsers = new UserDao();
         daoRecipe = new RecipeDao();
+
         //loadUsers();
     }
 
@@ -36,7 +37,8 @@ public class Model {
     }
 
     /**
-     *Method that gets a user from the database for their token.
+     * Method that gets a user from the database for their token.
+     *
      * @param token the token of the user to look up
      * @return 1 if the user has been found in the database, 0 otherwise.
      */
@@ -49,6 +51,35 @@ public class Model {
             result.setData(user);
         } else {
             result.setResult("0");
+            result.setData("Error: token could not be validated");
+        }
+        return result;
+    }
+
+    /**
+     * Method that gets a user from the database for their token and ends the 
+     * session of the user bay removings his token.
+     *
+     * @param token the token of the user to look up
+     * @return 1 if the user has been found in the database, 0 otherwise.
+     */
+    public DataResult finishSession(String token) {
+        DataResult result = new DataResult();
+        User user = daoUsers.findUserByToken(token);
+
+        if (user != null) {
+            boolean finished = daoUsers.updateUserToken(user, "");
+            if (finished) {
+                result.setResult("1");
+                result.setData("The user session is finished");
+            }
+            else{
+                result.setResult("0");
+                result.setData("The user session was'nt finished");
+            }
+
+        } else {
+            result.setResult("2");
             result.setData("Error: token could not be validated");
         }
         return result;
@@ -87,10 +118,12 @@ public class Model {
     }
 
     /**
-     *Method that adds a new user to the database and assigns him his first token.
-     * 
+     * Method that adds a new user to the database and assigns him his first
+     * token.
+     *
      * @param user the user to add to the database.
-     * @return 1 y el token si el usuario se ha añadido correctamente, 0 en el caso contrario.
+     * @return 1 y el token si el usuario se ha añadido correctamente, 0 en el
+     * caso contrario.
      */
     public DataResult addNewUser(User user) {
         DataResult result = new DataResult();
@@ -99,12 +132,12 @@ public class Model {
 
         if (added) {
             String token = Utils.getSHA256(u.getUsername() + u.getPassword() + new Random().nextInt(10000));
-            
+
             boolean isUpdateToken = daoUsers.updateUserToken(u, token);
             if (isUpdateToken) {
                 result.setResult("1");
                 result.setData(token);
-            } else{
+            } else {
                 result.setResult("2");
                 result.setData("Failed to validate token");
             }
@@ -115,9 +148,11 @@ public class Model {
 
         return result;
     }
-    
+
     /**
-     * Method that verifies if the token sent by the client exists in the database so that the user session is not closed.
+     * Method that verifies if the token sent by the client exists in the
+     * database so that the user session is not closed.
+     *
      * @param token the token of the user who does the autologin
      * @return 1 if the auto login is successful, 0 otherwise
      */
@@ -179,18 +214,21 @@ public class Model {
                 result.setResult("0");
                 result.setData("Failed when trying to load the image");
             }
-        }else{
+        } else {
             result.setResult("0");
             result.setData("Failed when trying to load the image - validate token");
         }
 
         return result;
     }
-    
+
     /**
-     * Method that receives an image from the client and stores it in a local location on the server.
+     * Method that receives an image from the client and stores it in a local
+     * location on the server.
+     *
      * @param file the file to save on the server
-     * @return 1 if the image was saved correctly, 2 if the file does not meet the required extension or 0 if the image cannot be added.
+     * @return 1 if the image was saved correctly, 2 if the file does not meet
+     * the required extension or 0 if the image cannot be added.
      */
     public DataResult setUserProfileImage(UploadedFile file) {
         DataResult result = new DataResult();
@@ -202,7 +240,7 @@ public class Model {
                 result.setData("Only jpg files can be uploaded");
                 return result;
             }
-            
+
             FileUtils.copyInputStreamToFile(file.content(), new File("C:\\Users\\Samuel\\Desktop\\CookimUpload\\binary\\" + file.filename()));
             File uploadedFile = new File("C:\\Users\\Samuel\\Desktop\\CookimUpload\\binary\\" + file.filename());
 
@@ -237,6 +275,22 @@ public class Model {
         return result;
     }
 
+    public DataResult likeRecipe(int num, String id) {
+        DataResult result = null;
+
+        Boolean response = daoRecipe.likeRecipe(num, id);
+        Recipe recipe = daoRecipe.findRecipeById(id);
+        if (response) {
+            result.setResult("1");
+            result.setData(recipe.getLikes());
+        } else {
+            result.setResult("0");
+            result.setData("recipe not updated");
+        }
+
+        return result;
+    }
+
     public DataResult getAllRecipesByCategory(String idCategory) {
         DataResult result = new DataResult();
         List<Recipe> recipes = daoRecipe.findAllRecipesByCategory(idCategory);
@@ -253,11 +307,12 @@ public class Model {
         }
         return result;
     }
-    
+
     /**
      * A method that fetches all recipes with their publishers.
-     * 
-     * @return 2 if the database list is empty, 1 if the recipes could be listed correctly and 0 otherwise.
+     *
+     * @return 2 if the database list is empty, 1 if the recipes could be listed
+     * correctly and 0 otherwise.
      */
     public DataResult getAllRecipesWithUser() {
         DataResult result = new DataResult();
@@ -275,12 +330,13 @@ public class Model {
         }
         return result;
     }
-    
+
     /**
-     * method that receives the token from the user who wants to add a new recipe, 
-     * if that token is valid in the database it will take the attributes of the recipe sent 
-     * by the user and create a new recipe to be added to the database.
-     * 
+     * method that receives the token from the user who wants to add a new
+     * recipe, if that token is valid in the database it will take the
+     * attributes of the recipe sent by the user and create a new recipe to be
+     * added to the database.
+     *
      * @param recipe the new recipe to add
      * @return 1 if the recipe was added successfully, 0 otherwise
      */
@@ -297,10 +353,10 @@ public class Model {
         }
         return result;
     }
-    
+
     /**
      * Method that removes a recipe from the database .
-     * 
+     *
      * @param id the id of the recipe to delete
      * @return 1 if the recipe was added successfully, 0 otherwise
      */
@@ -320,8 +376,8 @@ public class Model {
 
     /**
      * Method to modify an already existing line in the database.
-     * 
-     * @param recipe the modified recipe 
+     *
+     * @param recipe the modified recipe
      * @return 1 if the recipe is modified successfully, 0 otherwise
      */
     public DataResult modifyRecipe(Recipe recipe) {
