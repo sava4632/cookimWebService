@@ -285,6 +285,19 @@ public class CookimWebService {
 
             ctx.result(gson.toJson(result));
         });
+        
+        app.post("/Cookim/logout", ctx -> { //http://localhost:7070/Cookim/logout
+            System.out.println(" --------------------Receiving HTTP POST request on the route: " + ctx.path() + "-----------------------");
+            //String token = ctx.formParam("token");
+            String token = ctx.header("Authorization").replace("Bearer ", "");
+            System.out.println("the user with the token: " + token + " tries to end his sesssion...");
+
+            DataResult result = model.finishSession(token);
+            System.out.println("The user with the token: " + token + " ends his session");
+            Gson gson = new Gson();
+            ctx.result(gson.toJson(result));
+        });
+
 
         app.post("/Cookim/user-profile-image", ctx -> {//http://localhost:7070/Cookim/user-profile-image
             System.out.println(" --------------------Receiving HTTPS POST request on the route: " + ctx.path() + "-----------------------");

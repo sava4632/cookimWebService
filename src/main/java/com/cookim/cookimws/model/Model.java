@@ -68,6 +68,7 @@ public class Model {
         User user = daoUsers.findUserByToken(token);
 
         if (user != null) {
+            System.out.println("the user is found");
             boolean finished = daoUsers.updateUserToken(user, "");
             if (finished) {
                 result.setResult("1");
@@ -278,7 +279,7 @@ public class Model {
         DataResult result = new DataResult();
 
         Recipe recipe = daoRecipe.findRecipeById(id);
-        
+
         if (recipe != null) {
             System.out.println("Recipe founded");
             System.out.println("like Intent");
