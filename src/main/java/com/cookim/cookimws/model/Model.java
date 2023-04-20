@@ -68,8 +68,7 @@ public class Model {
         User user = daoUsers.findUserByToken(token);
 
         if (user != null) {
-            System.out.println("the user is found");
-            boolean finished = daoUsers.updateUserToken(user, "");
+            boolean finished = daoUsers.updateUserToken(user, null);
             if (finished) {
                 result.setResult("1");
                 result.setData("The user session is finished");

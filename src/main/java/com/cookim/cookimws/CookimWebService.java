@@ -43,7 +43,7 @@ public class CookimWebService {
 //            conf.sniHostCheck = false;   // Enable SNI hostname verification.
 //            conf.tlsConfig = TLSConfig.INTERMEDIATE;      // Set the TLS configuration. (by default it uses Mozilla's intermediate configuration)
 //        });
-//
+
 //        Javalin app = Javalin.create(javalinConfig -> {
 //            javalinConfig.plugins.register(plugin);
 //        }).start();
@@ -257,8 +257,11 @@ public class CookimWebService {
 
         app.post("/Cookim/login", ctx -> { //http://localhost:7070/Cookim/login
             System.out.println(" --------------------Receiving HTTPS POST request on the route: " + ctx.path() + "-----------------------");
-            String username = ctx.formParam("username");
-            String password = ctx.formParam("password");
+            String credentials = ctx.header("Authorization").replace("Bearer ", "");
+            
+            String[] parts = credentials.split(":");
+            String username = parts[0];
+            String password = parts[1];
 
             System.out.println(username + " " + password);
 
@@ -288,12 +291,11 @@ public class CookimWebService {
         
         app.post("/Cookim/logout", ctx -> { //http://localhost:7070/Cookim/logout
             System.out.println(" --------------------Receiving HTTP POST request on the route: " + ctx.path() + "-----------------------");
-            //String token = ctx.formParam("token");
             String token = ctx.header("Authorization").replace("Bearer ", "");
             System.out.println("the user with the token: " + token + " tries to end his sesssion...");
 
             DataResult result = model.finishSession(token);
-            System.out.println("The user with the token: " + token + " ends his session");
+            System.out.println(result.toString());
             Gson gson = new Gson();
             ctx.result(gson.toJson(result));
         });
