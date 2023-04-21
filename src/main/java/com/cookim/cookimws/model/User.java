@@ -65,6 +65,15 @@ public class User {
         this.path_img = path_img;
         this.id_rol = id_rol;
     }
+
+    public User(String username, String password, String full_name, String email, String phone, long id_rol) {
+        this.username = username;
+        this.password = password;
+        this.full_name = full_name;
+        this.email = email;
+        this.phone = phone;
+        this.id_rol = id_rol;
+    }
     
     
     

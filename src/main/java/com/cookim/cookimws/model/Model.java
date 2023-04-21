@@ -11,6 +11,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.RandomStringUtils;
+
 
 /**
  *
@@ -20,6 +22,7 @@ public class Model {
 
     UserDaoInterface daoUsers;
     RecipeDaoInterface daoRecipe;
+    String userPicture;
 
     public Model() {
         daoUsers = new UserDao();
@@ -126,6 +129,15 @@ public class Model {
      */
     public DataResult addNewUser(User user) {
         DataResult result = new DataResult();
+        if(user.getPath_img() != null){
+            user.setPath_img(userPicture);
+        }
+        else{
+            user.setPath_img("/var/www/resources/users/default.png");
+        }
+        
+        userPicture = null;
+        
         boolean added = daoUsers.add(user);
         User u = getUser(user.getUsername(), user.getPassword());
 
@@ -239,9 +251,32 @@ public class Model {
                 result.setData("Only jpg files can be uploaded");
                 return result;
             }
-
-            FileUtils.copyInputStreamToFile(file.content(), new File("C:\\Users\\Samuel\\Desktop\\CookimUpload\\binary\\" + file.filename()));
-            File uploadedFile = new File("C:\\Users\\Samuel\\Desktop\\CookimUpload\\binary\\" + file.filename());
+            //LOCAL
+//            FileUtils.copyInputStreamToFile(file.content(), new File("C:\\Users\\Samuel\\Desktop\\CookimUpload\\binary\\" + file.filename()));
+//            File uploadedFile = new File("C:\\Users\\Samuel\\Desktop\\CookimUpload\\binary\\" + file.filename());
+            
+            //SERVER    
+            // Create a unique filename for the uploaded file
+            String randomString = RandomStringUtils.randomAlphanumeric(10);
+            String timestamp = Long.toString(System.currentTimeMillis());
+            String uniqueFilename = randomString + "-" + timestamp + ".jpg";
+            
+            // Check if the filename already exists in the server folder
+            String path = "/var/www/resources/users/";
+            //FileUtils.copyInputStreamToFile(file.content(), new File(path + file.filename()));
+            File uploadedFile = new File(path + file.filename());
+            int suffix = 1;
+            
+            while (uploadedFile.exists()) {
+                uniqueFilename = randomString + "-" + timestamp + "-" + suffix + ".jpg";
+                uploadedFile = new File(path + uniqueFilename);
+                suffix++;
+            }
+            
+            userPicture = uniqueFilename;
+            
+            // Save the uploaded file with the unique filename
+            FileUtils.copyInputStreamToFile(file.content(), uploadedFile);
 
             if (uploadedFile.exists()) {
                 result.setResult("1");
