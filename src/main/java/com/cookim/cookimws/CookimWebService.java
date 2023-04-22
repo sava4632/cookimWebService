@@ -27,26 +27,30 @@ public class CookimWebService {
         Model model = new Model();
 
         //HTTP
-        Javalin app = Javalin.create().start(7070);
-        //HTTPS        
-//        SSLPlugin plugin = new SSLPlugin(conf -> {
-//            conf.pemFromPath("C:\\Program Files\\OpenSSL-Win64\\bin\\cert.pem",
-//                    "C:\\Program Files\\OpenSSL-Win64\\bin\\key.pem", "cookimadmin");
-//            // additional configuration options
-//            conf.insecurePort = 7070;
-//            conf.host = null;      // Host to bind to, by default it will bind to all interfaces.
-//            conf.insecure = true;    // Toggle the default http (insecure) connector.
-//            conf.secure = true;   // Toggle the default https (secure) connector.
-//            conf.http2 = true;        // Toggle HTTP/2 Support
-//            conf.securePort = 443;   // Port to use on the SSL (secure) connector.
-//            conf.insecurePort = 7070;   // Port to use on the http (insecure) connector.
-//            conf.sniHostCheck = false;   // Enable SNI hostname verification.
-//            conf.tlsConfig = TLSConfig.INTERMEDIATE;      // Set the TLS configuration. (by default it uses Mozilla's intermediate configuration)
-//        });
+        //Javalin app = Javalin.create().start(7070);
+        //HTTPS      
+        SSLPlugin plugin = new SSLPlugin(conf -> {    
+            //local
+//            conf.pemFromPath("src\\SSL\\cert.pem",
+//                    "src\\SSL\\key.pem", "cookimadmin");
+            //ubuntu
+            conf.pemFromPath("/app/SSL/cert.pem",
+                    "/app/SSL/key.pem", "cookimadmin");
+            // additional configuration options
+            conf.insecurePort = 7070;
+            conf.host = null;      // Host to bind to, by default it will bind to all interfaces.
+            conf.insecure = true;    // Toggle the default http (insecure) connector.
+            conf.secure = true;   // Toggle the default https (secure) connector.
+            conf.http2 = true;        // Toggle HTTP/2 Support
+            conf.securePort = 443;   // Port to use on the SSL (secure) connector.
+            conf.insecurePort = 7070;   // Port to use on the http (insecure) connector.
+            conf.sniHostCheck = false;   // Enable SNI hostname verification.
+            conf.tlsConfig = TLSConfig.INTERMEDIATE;      // Set the TLS configuration. (by default it uses Mozilla's intermediate configuration)
+        });
 
-//        Javalin app = Javalin.create(javalinConfig -> {
-//            javalinConfig.plugins.register(plugin);
-//        }).start();
+        Javalin app = Javalin.create(javalinConfig -> {
+            javalinConfig.plugins.register(plugin);
+        }).start();
 
         //------------------------------------------RECIPES METODS------------------------------------------------
         //GET
@@ -230,12 +234,12 @@ public class CookimWebService {
             String full_name = ctx.formParam("full_name");
             String email = ctx.formParam("email");
             String phone = ctx.formParam("phone");
-            String path_img = ctx.formParam("path_img");
+            //String path_img = ctx.formParam("path_img");
             String id_rolStr = ctx.formParam("id_rol");
             long id_rol = Long.parseLong(id_rolStr);
             
 
-            User user = new User(username, password, full_name, email, phone, path_img, id_rol);
+            User user = new User(username, password, full_name, email, phone, id_rol);
 
             DataResult result = model.addNewUser(user);
             
