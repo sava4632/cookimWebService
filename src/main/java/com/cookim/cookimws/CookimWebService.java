@@ -53,25 +53,32 @@ public class CookimWebService {
         }).start();
 
         //------------------------------------------RECIPES METODS------------------------------------------------
+        //------------------------------------------RECIPES METODS------------------------------------------------
         //GET
         app.get("/Cookim/home-page", ctx -> {//http://localhost:7070/Cookim/home_page
+            System.out.println("----------------------------------------------------------------------------------------------------------");
             System.out.println(" --------------------Receiving HTTP POST request on the route: " + ctx.path() + "-----------------------");
             DataResult result = model.getAllRecipesWithUser();
             Gson gson = new Gson();
             ctx.result(gson.toJson(result));
+                        System.out.println("----------------------------------------------------------------------------------------------------------");
+
         });
 
         //POST
         app.post("/Cookim/home-page-preferences", ctx -> {//http://localhost:7070/Cookim/home_page
+            System.out.println("----------------------------------------------------------------------------------------------------------");
             System.out.println(" --------------------Receiving HTTP POST request on the route: " + ctx.path() + "-----------------------");
             String idCategory = ctx.formParam("idCategory");
             DataResult result = model.getAllRecipesByCategory(idCategory);
 
             Gson gson = new Gson();
             ctx.result(gson.toJson(result));
+            System.out.println("----------------------------------------------------------------------------------------------------------");
         });
 
         app.post("/Cookim/add-recipe", ctx -> {//http://localhost:7070/Cookim/home_page
+            System.out.println("----------------------------------------------------------------------------------------------------------");
             System.out.println(" --------------------Receiving HTTP POST request on the route: " + ctx.path() + "-----------------------");
             String token = ctx.formParam("token");
             DataResult isAuthenticated = model.getUserByToken(token);
@@ -99,9 +106,11 @@ public class CookimWebService {
 
             Gson gson = new Gson();
             ctx.result(gson.toJson(result));
+            System.out.println("----------------------------------------------------------------------------------------------------------");
         });
 
         app.post("/Cookim/remove-recipe", ctx -> {//http://localhost:7070/Cookim/home_page
+            System.out.println("----------------------------------------------------------------------------------------------------------");
             System.out.println(" --------------------Receiving HTTP POST request on the route: " + ctx.path() + "-----------------------");
             String token = ctx.formParam("token");
             DataResult isAuthenticated = model.getUserByToken(token);
@@ -118,9 +127,11 @@ public class CookimWebService {
 
             Gson gson = new Gson();
             ctx.result(gson.toJson(result));
+            System.out.println("----------------------------------------------------------------------------------------------------------");
         });
 
         app.post("/Cookim/modify-recipe", ctx -> {//http://localhost:7070/Cookim/modify-recipe
+            System.out.println("----------------------------------------------------------------------------------------------------------");
             System.out.println(" --------------------Receiving HTTP POST request on the route: " + ctx.path() + "-----------------------");
             String token = ctx.formParam("token");
             DataResult isAuthenticated = model.getUserByToken(token);
@@ -150,19 +161,24 @@ public class CookimWebService {
 
             Gson gson = new Gson();
             ctx.result(gson.toJson(result));
+            System.out.println("----------------------------------------------------------------------------------------------------------");
         });
 
         //-----------------------------------------USERS METODS---------------------------------------------------
+        //-----------------------------------------USERS METODS---------------------------------------------------
         //GET
         app.get("/users", ctx -> {//http://192.168.127.80:7070/users
+            System.out.println("----------------------------------------------------------------------------------------------------------");
             System.out.println(" --------------------Receiving HTTP POST request on the route: " + ctx.path() + "-----------------------");
             List<User> userList = model.getAllUsers();
             Gson gson = new Gson();
             ctx.result(gson.toJson(userList));
+            System.out.println("----------------------------------------------------------------------------------------------------------");
         });
 
         //POST
         app.post("/Cookim/my-profile", ctx -> { //http://localhost:7070/Cookim/profile
+            System.out.println("----------------------------------------------------------------------------------------------------------");
             System.out.println(" --------------------Receiving HTTP POST request on the route: " + ctx.path() + "-----------------------");
             //String token = ctx.formParam("token");
             String token = ctx.header("Authorization").replace("Bearer ", "");
@@ -172,9 +188,11 @@ public class CookimWebService {
             System.out.println("The user with the token: " + token + " goes to his profile");
             Gson gson = new Gson();
             ctx.result(gson.toJson(result));
+            System.out.println("----------------------------------------------------------------------------------------------------------");
         });
 
         app.post("/Cookim/my-profile/modify-account", ctx -> { //http://localhost:7070/Cookim/my-profile/modify
+            System.out.println("----------------------------------------------------------------------------------------------------------");
             System.out.println(" --------------------Receiving HTTP POST request on the route: " + ctx.path() + "-----------------------");
             String username = ctx.formParam("username");
             String password = ctx.formParam("password");
@@ -192,9 +210,11 @@ public class CookimWebService {
 
             Gson gson = new Gson();
             ctx.result(gson.toJson(result));
+            System.out.println("----------------------------------------------------------------------------------------------------------");
         });
 
         app.post("/Cookim/my-profile/delete-account", ctx -> { //http://localhost:7070/Cookim/my-profile/delete-account
+            System.out.println("----------------------------------------------------------------------------------------------------------");
             System.out.println(" --------------------Receiving HTTP POST request on the route: " + ctx.path() + "-----------------------");
             String token = ctx.header("Authorization").replace("Bearer ", "");
             System.out.println("the user with the token: " + token + " tries to delete his account");
@@ -204,14 +224,16 @@ public class CookimWebService {
 
             Gson gson = new Gson();
             ctx.result(gson.toJson(result));
+            System.out.println("----------------------------------------------------------------------------------------------------------");
         });
 
         //UPLOAD PROFILE PICTURE METOD
         app.post("/Cookim/upload/profile_picture", ctx -> {
+            System.out.println("----------------------------------------------------------------------------------------------------------");
             System.out.println(" --------------------Receiving HTTPS POST request on the route: " + ctx.path() + "-----------------------");
+            String token = ctx.header("Authorization").replace("Bearer ", "");
             ctx.uploadedFiles("binaryFile").forEach(file -> {
-                DataResult result = model.setUserProfileImage(file);
-                System.out.println("Saving file to path: C:\\Users\\Samuel\\Desktop\\CookimUpload\\binary\\" + file.filename());
+                DataResult result = model.setUserProfileImage(file,token);
                 
                 if(result.getResult().equals("1")){
                     System.out.println("File " + file.filename() + " saved successfully ");
@@ -224,42 +246,48 @@ public class CookimWebService {
                 Gson gson = new Gson();
                 ctx.result(gson.toJson(result));
             });
-
+            System.out.println("----------------------------------------------------------------------------------------------------------");
         });
 
         app.post("/Cookim/sign-in", ctx -> { //http://localhost:7070/Cookim/sign-in
+            System.out.println("----------------------------------------------------------------------------------------------------------");
             System.out.println(" --------------------Receiving HTTPS POST request on the route: " + ctx.path() + "-----------------------");
             String username = ctx.formParam("username");
             String password = ctx.formParam("password");
             String full_name = ctx.formParam("full_name");
             String email = ctx.formParam("email");
             String phone = ctx.formParam("phone");
-            //String path_img = ctx.formParam("path_img");
             String id_rolStr = ctx.formParam("id_rol");
             long id_rol = Long.parseLong(id_rolStr);
+            
+            // Obtener el archivo de imagen cargado
+            UploadedFile file = ctx.uploadedFile("img");
             
 
             User user = new User(username, password, full_name, email, phone, id_rol);
 
-            DataResult result = model.addNewUser(user);
+            DataResult result = model.addNewUser(user,file);
             
             System.out.println(result);
 
             Gson gson = new Gson();
             ctx.result(gson.toJson(result));
-
+            System.out.println("----------------------------------------------------------------------------------------------------------");
         });
 
         app.post("/Cookim/autologin", ctx -> { //http://localhost:7070/Cookim/autologin
+            System.out.println("----------------------------------------------------------------------------------------------------------");
             System.out.println(" --------------------Receiving HTTPS POST request on the route: " + ctx.path() + "-----------------------");
             String token = ctx.header("Authorization").replace("Bearer ", "");
             DataResult result = model.autoLogin(token);
 
             Gson gson = new Gson();
             ctx.result(gson.toJson(result));
+            System.out.println("----------------------------------------------------------------------------------------------------------");
         });
 
         app.post("/Cookim/login", ctx -> { //http://localhost:7070/Cookim/login
+            System.out.println("----------------------------------------------------------------------------------------------------------");
             System.out.println(" --------------------Receiving HTTPS POST request on the route: " + ctx.path() + "-----------------------");
             String credentials = ctx.header("Authorization").replace("Bearer ", "");
             
@@ -274,9 +302,11 @@ public class CookimWebService {
             System.out.println(gson.toJson(result));
 
             ctx.result(gson.toJson(result));
+            System.out.println("----------------------------------------------------------------------------------------------------------");
         });
         
         app.post("/Cookim/like", ctx -> { //http://localhost:7070/Cookim/like
+            System.out.println("----------------------------------------------------------------------------------------------------------");
             System.out.println(" --------------------Receiving HTTPS POST request on the route: " + ctx.path() + "-----------------------");
             System.out.println("user tries to update Recipe");
             String act = ctx.formParam("num");
@@ -291,9 +321,11 @@ public class CookimWebService {
             System.out.println(gson.toJson(result));
 
             ctx.result(gson.toJson(result));
+            System.out.println("----------------------------------------------------------------------------------------------------------");
         });
         
         app.post("/Cookim/logout", ctx -> { //http://localhost:7070/Cookim/logout
+            System.out.println("----------------------------------------------------------------------------------------------------------");
             System.out.println(" --------------------Receiving HTTP POST request on the route: " + ctx.path() + "-----------------------");
             String token = ctx.header("Authorization").replace("Bearer ", "");
             System.out.println("the user with the token: " + token + " tries to end his sesssion...");
@@ -302,16 +334,19 @@ public class CookimWebService {
             System.out.println(result.toString());
             Gson gson = new Gson();
             ctx.result(gson.toJson(result));
+            System.out.println("----------------------------------------------------------------------------------------------------------");
         });
 
 
         app.post("/Cookim/user-profile-image", ctx -> {//http://localhost:7070/Cookim/user-profile-image
+            System.out.println("----------------------------------------------------------------------------------------------------------");
             System.out.println(" --------------------Receiving HTTPS POST request on the route: " + ctx.path() + "-----------------------");
             String token = ctx.formParam("token");
             DataResult result = model.getUserProfileImage(token);
 
             Gson gson = new Gson();
             ctx.result(gson.toJson(result));
+            System.out.println("----------------------------------------------------------------------------------------------------------");
         });
 
     }
