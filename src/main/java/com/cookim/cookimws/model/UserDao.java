@@ -241,4 +241,24 @@ public class UserDao implements UserDaoInterface {
         return user;
     }
 
+    @Override
+    public boolean setUserPathPicture(long id, String path) {
+        boolean result = false;
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            PreparedStatement ps;
+            String query = "UPDATE user SET path_img = ? WHERE id = ?";
+            ps = conn.prepareStatement(query);
+            ps.setString(1, path);
+            ps.setLong(2, id);
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0) {
+                result = true;
+            }
+            ps.close();
+        } catch (Exception e) {
+            System.out.println("failed to set user path picture: " + e.toString());
+        }
+        return result;
+    }
+
 }

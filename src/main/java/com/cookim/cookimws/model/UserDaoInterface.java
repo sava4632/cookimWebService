@@ -75,5 +75,5 @@ public interface UserDaoInterface {
      */
     public boolean modifyUser(User user);
     
-    
+    public boolean setUserPathPicture(long id,String path);
 }

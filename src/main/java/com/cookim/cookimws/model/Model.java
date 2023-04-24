@@ -305,7 +305,7 @@ public class Model {
 
         try {
             //Verify that the file has a .jpg extension
-            if (!FilenameUtils.getExtension(file.filename()).equalsIgnoreCase("jpg")) {
+            if (file != null && !FilenameUtils.getExtension(file.filename()).equalsIgnoreCase("jpg")) {
                 result.setResult("2");
                 result.setData("Only jpg files can be uploaded");
                 return result;
@@ -347,9 +347,12 @@ public class Model {
                 if(user != null){
                     System.out.println("Se encontro un usuario");
                     System.out.println(user.toString());
-                    user.setPath_img(path + uniqueFilename);
-                    daoUsers.modifyUser(user);
-                    System.out.println(user.toString());
+                    boolean updated = daoUsers.setUserPathPicture(user.getId(),path+uniqueFilename);
+                    if (updated) {
+                        System.out.println("Se ha asignado una imagen al usuario: " + user.getUsername());
+                    }else{
+                        System.out.println("No se pudo asignar la imagen");
+                    }
                     
                 }
             } else {
