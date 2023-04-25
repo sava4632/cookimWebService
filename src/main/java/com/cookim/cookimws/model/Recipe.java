@@ -1,5 +1,7 @@
 package com.cookim.cookimws.model;
 
+import java.util.List;
+
 /**
  *
  * @author cookimadmin
@@ -13,8 +15,10 @@ public class Recipe {
     private double rating;
     private int likes;
     private String user_name;
+    private List<Ingredient> ingredients;
+    private List<Step> steps;
 
-    public Recipe(long id, long id_user, String name, String description, String path_img, double rating, int likes) {
+    public Recipe(long id, long id_user, String name, String description, String path_img, double rating, int likes,List<Ingredient> ingredients,  List<Step> steps) {
         this.id = id;
         this.id_user = id_user;
         this.name = name;
@@ -22,6 +26,8 @@ public class Recipe {
         this.path_img = path_img;
         this.rating = rating;
         this.likes = likes;
+        this.ingredients = ingredients;
+        this.steps = steps;
     }
 
     public Recipe(long id_user, String name, String description, String path_img, double rating, int likes) {
@@ -49,6 +55,10 @@ public class Recipe {
     
 
     public Recipe() {
+    }
+
+    public Recipe(long id, long id_user, String name, String description, String path_img, double rating, int likes) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
     
     
@@ -122,6 +132,22 @@ public class Recipe {
     @Override
     public String toString() {
         return "Recipe{" + "id=" + id + ", id_user=" + id_user + ", name=" + name + ", description=" + description + ", path_img=" + path_img + ", rating=" + rating + ", likes=" + likes + '}';
+    }
+
+    public List<Ingredient> getIngredients() {
+        return ingredients;
+    }
+
+    public void setIngredients(List<Ingredient> ingredients) {
+        this.ingredients = ingredients;
+    }
+
+    public List<Step> getSteps() {
+        return steps;
+    }
+
+    public void setSteps(List<Step> steps) {
+        this.steps = steps;
     }
     
     

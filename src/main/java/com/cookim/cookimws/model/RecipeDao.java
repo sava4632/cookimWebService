@@ -243,5 +243,62 @@ public class RecipeDao implements RecipeDaoInterface {
         }
         return recipe;
     }
+    
+  public Recipe findFullRecipe(String id) {
+    Recipe recipe = null;
+    try (Connection conn = MariaDBConnection.getConnection()) {
+        String query = "SELECT r.id, r.id_user, r.name, r.description, r.path_img, r.rating, r.likes, "
+                       + "ri.id as ri_id, ri.id_recipe, ri.id_ingredient, "
+                       + "i.id as ingredient_id, i.name as ingredient_name, "
+                       + "s.id as step_id, s.recipe_id, s.step_number, s.description as step_description, s.path as step_path "
+                       + "FROM recipe r "
+                       + "INNER JOIN recipe_ingredients ri ON r.id = ri.id_recipe "
+                       + "INNER JOIN ingredients i ON ri.id_ingredient = i.id "
+                       + "INNER JOIN steps s ON r.id = s.recipe_id "
+                       + "WHERE r.id = ?";
+        PreparedStatement ps = conn.prepareStatement(query);
+        ps.setLong(1, Long.parseLong(id)); // Convertir id de String a long
+        ResultSet rs = ps.executeQuery();
+        recipe = new Recipe();
+        List<Ingredient> ingredients = new ArrayList<>();
+        List<Step> steps = new ArrayList<>();
+        while (rs.next()) {
+            recipe.setId(rs.getLong("id"));
+            recipe.setId_user(rs.getLong("id_user"));
+            recipe.setName(rs.getString("name"));
+            recipe.setDescription(rs.getString("description"));
+            recipe.setPath_img(rs.getString("path_img"));
+            recipe.setRating(rs.getDouble("rating"));
+            recipe.setLikes(rs.getInt("likes"));
+
+            Ingredient ingredient = new Ingredient();
+            ingredient.setId(rs.getInt("ri_id"));
+            ingredient.setId_ingredient(rs.getInt("id_ingredient"));
+            ingredient.setId_recipe(rs.getInt("id_recipe"));
+            ingredient.setName(rs.getString("ingredient_name"));
+            ingredients.add(ingredient);
+
+            Step step = new Step();
+            step.setId(rs.getInt("step_id"));
+            step.setRecipe_id(rs.getInt("recipe_id"));
+            step.setStep_number(rs.getInt("step_number"));
+            step.setDescription(rs.getString("step_description"));
+            step.setPath(rs.getString("step_path"));
+            steps.add(step);
+        }
+        recipe.setIngredients(ingredients);
+        recipe.setSteps(steps);
+        rs.close();
+        ps.close();
+    } catch (SQLException ex) {
+        System.out.println("Failed to find recipe by id: " + ex.getMessage());
+    }
+    return recipe;
+}
+
+
+
+
+
 
 }

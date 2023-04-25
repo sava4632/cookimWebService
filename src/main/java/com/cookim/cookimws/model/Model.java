@@ -513,6 +513,26 @@ public class Model {
         }
         return result;
     }
+    
+    public DataResult findFullRecipe(String id){
+        DataResult result = new DataResult();
+        
+        Recipe recipe = daoRecipe.findFullRecipe(id);
+        
+        if (recipe != null) {
+            
+            result.setResult("1");
+            result.setData(recipe);
+            
+        }else
+        {
+            result.setResult("0");
+            result.setData("error finding Recipe");
+            
+        }
+        
+        return result;
+    }
 
     //-------------------------------------CATEGORIES-------------------------------------------------
 }

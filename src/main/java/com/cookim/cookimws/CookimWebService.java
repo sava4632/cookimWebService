@@ -64,6 +64,18 @@ public class CookimWebService {
                         System.out.println("----------------------------------------------------------------------------------------------------------");
 
         });
+        
+        app.get("/Cookim/steps", ctx -> {//http://localhost:7070/Cookim/steps
+            System.out.println("----------------------------------------------------------------------------------------------------------");
+            System.out.println(" --------------------Receiving HTTP POST request on the route: " + ctx.path() + "-----------------------");
+            String id = ctx.formParam("id");
+            DataResult result = model.findFullRecipe(id);
+            Gson gson = new Gson();
+            ctx.result(gson.toJson(result));
+                        System.out.println("----------------------------------------------------------------------------------------------------------");
+
+        });
+
 
         //POST
         app.post("/Cookim/home-page-preferences", ctx -> {//http://localhost:7070/Cookim/home_page
@@ -348,6 +360,8 @@ public class CookimWebService {
             ctx.result(gson.toJson(result));
             System.out.println("----------------------------------------------------------------------------------------------------------");
         });
+        
+        
 
     }
 }
