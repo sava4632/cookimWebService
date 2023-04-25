@@ -22,7 +22,7 @@ public class RecipeDao implements RecipeDaoInterface {
     @Override
     public List<Recipe> findAllRecipes() {
         List<Recipe> result = new ArrayList<>();
-        try ( Connection conn = MariaDBConnection.getConnection()) {
+        try (Connection conn = MariaDBConnection.getConnection()) {
             PreparedStatement ps;
             ResultSet rs;
             String query = "SELECT * FROM recipe;";
@@ -52,7 +52,7 @@ public class RecipeDao implements RecipeDaoInterface {
     @Override
     public boolean addRecipe(Recipe recipe) {
         boolean result = false;
-        try ( Connection conn = MariaDBConnection.getConnection()) {
+        try (Connection conn = MariaDBConnection.getConnection()) {
             PreparedStatement ps;
             String query = "INSERT INTO recipe(id_user, name, description, path_img, rating, likes) VALUES (?, ?, ?, ?, ?, ?);";
             ps = conn.prepareStatement(query);
@@ -77,7 +77,7 @@ public class RecipeDao implements RecipeDaoInterface {
     @Override
     public boolean deleteRecipe(String id) {
         boolean result = false;
-        try ( Connection conn = MariaDBConnection.getConnection()) {
+        try (Connection conn = MariaDBConnection.getConnection()) {
             PreparedStatement ps;
             String query = "DELETE FROM recipe WHERE id = ?";
             ps = conn.prepareStatement(query);
@@ -105,7 +105,7 @@ public class RecipeDao implements RecipeDaoInterface {
         // incrementar el número de likes de la receta
         boolean result = false;
 
-        try ( Connection conn = MariaDBConnection.getConnection()) {
+        try (Connection conn = MariaDBConnection.getConnection()) {
             PreparedStatement ps;
             String query = "UPDATE recipe SET likes=? WHERE id=?";
             ps = conn.prepareStatement(query);
@@ -127,7 +127,7 @@ public class RecipeDao implements RecipeDaoInterface {
     @Override
     public boolean modifyRecipe(Recipe recipe) {
         boolean result = false;
-        try ( Connection conn = MariaDBConnection.getConnection()) {
+        try (Connection conn = MariaDBConnection.getConnection()) {
             PreparedStatement ps;
             String query = "UPDATE recipe SET id_user=?, name=?, description=?, path_img=?, rating=?, likes=? WHERE id=?";
             ps = conn.prepareStatement(query);
@@ -153,7 +153,7 @@ public class RecipeDao implements RecipeDaoInterface {
     @Override
     public List<Recipe> findAllRecipesByCategory(String idCategory) {
         List<Recipe> recipes = new ArrayList<>();
-        try ( Connection conn = MariaDBConnection.getConnection()) {
+        try (Connection conn = MariaDBConnection.getConnection()) {
             String query = "SELECT recipe.id, recipe.id_user, recipe.name, recipe.description, recipe.path_img, recipe.rating, recipe.likes FROM recipe "
                     + "JOIN recipe_category ON recipe_category.id_recipe = recipe.id "
                     + "WHERE recipe_category.id_category = ?";
@@ -182,7 +182,7 @@ public class RecipeDao implements RecipeDaoInterface {
     @Override
     public List<Recipe> findAllRecipesWithUser() {
         List<Recipe> result = new ArrayList<>();
-        try ( Connection conn = MariaDBConnection.getConnection()) {
+        try (Connection conn = MariaDBConnection.getConnection()) {
             PreparedStatement ps;
             ResultSet rs;
             String query = "SELECT recipe.id, recipe.id_user, recipe.name, recipe.description, "
@@ -220,7 +220,7 @@ public class RecipeDao implements RecipeDaoInterface {
     @Override
     public Recipe findRecipeById(String id) {
         Recipe recipe = null;
-        try ( Connection conn = MariaDBConnection.getConnection()) {
+        try (Connection conn = MariaDBConnection.getConnection()) {
             String query = "SELECT * FROM recipe WHERE id = ?";
             PreparedStatement ps = conn.prepareStatement(query);
             ps.setString(1, id);
@@ -240,6 +240,65 @@ public class RecipeDao implements RecipeDaoInterface {
             ps.close();
         } catch (SQLException ex) {
             System.out.println("Failed to find recipes by category: " + ex.getMessage());
+        }
+        return recipe;
+    }
+
+    @Override
+    public Recipe findFullRecipe(long id) {
+        Recipe recipe = null;
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            String query = "SELECT r.id, r.id_user, r.name, r.description, r.path_img, r.rating, r.likes, "
+                    + "ri.id as ri_id, ri.id_recipe, ri.id_ingredient, "
+                    + "i.id as ingredient_id, i.name as ingredient_name, "
+                    + "s.id as step_id, s.id_recipe as step_recipe_id, s.step_number, s.description as step_description, s.path_img as step_path_img "
+                    + "FROM recipe r "
+                    + "LEFT JOIN recipe_ingredients ri ON r.id = ri.id_recipe "
+                    + "LEFT JOIN ingredients i ON ri.id_ingredient = i.id "
+                    + "LEFT JOIN recipe_step s ON r.id = s.id_recipe "
+                    + "WHERE r.id = ?";
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setLong(1, id); 
+            ResultSet rs = ps.executeQuery();
+            recipe = new Recipe();
+            List<Ingredient> ingredients = new ArrayList<>();
+            List<Step> steps = new ArrayList<>();
+            while (rs.next()) {
+                recipe.setId(rs.getLong("id"));
+                recipe.setId_user(rs.getLong("id_user"));
+                recipe.setName(rs.getString("name"));
+                recipe.setDescription(rs.getString("description"));
+                recipe.setPath_img(rs.getString("path_img"));
+                recipe.setRating(rs.getDouble("rating"));
+                recipe.setLikes(rs.getInt("likes"));
+
+                int ingredientId = rs.getInt("ingredient_id");
+                if (ingredientId != 0) {
+                    Ingredient ingredient = new Ingredient();
+                    ingredient.setId(rs.getInt("ri_id"));
+                    ingredient.setId_recipe(rs.getInt("id_recipe"));
+                    ingredient.setId_ingredient(rs.getInt("id_ingredient"));
+                    ingredient.setName(rs.getString("ingredient_name"));
+                    ingredients.add(ingredient);
+                }
+
+                int stepId = rs.getInt("step_id");
+                if (stepId != 0) {
+                    Step step = new Step();
+                    step.setId(stepId);
+                    step.setRecipe_id(rs.getInt("step_recipe_id"));
+                    step.setStep_number(rs.getInt("step_number"));
+                    step.setDescription(rs.getString("step_description"));
+                    step.setPath(rs.getString("step_path_img"));
+                    steps.add(step);
+                }
+            }
+            recipe.setIngredients(ingredients);
+            recipe.setSteps(steps);
+            rs.close();
+            ps.close();
+        } catch (SQLException ex) {
+            System.out.println("Failed to find recipe by id: " + ex.getMessage());
         }
         return recipe;
     }

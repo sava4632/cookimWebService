@@ -11,6 +11,7 @@ import com.jcraft.jsch.SftpException;
 import io.javalin.http.UploadedFile;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;
@@ -126,29 +127,83 @@ public class Model {
     }
 
     /**
+     *
      * Method that adds a new user to the database and assigns him his first
-     * token.
+     * token. It also encrypts and saves the user's profile image to the server,
+     * and updates the user's record in the database with the path to the stored
+     * image. If no image is provided, it assigns the default profile image to
+     * the user.
      *
      * @param user the user to add to the database.
-     * @return 1 y el token si el usuario se ha añadido correctamente, 0 en el
-     * caso contrario.
+     * @param file the uploaded profile image.
+     * @return a DataResult object with a result code and message indicating
+     * success or failure, as well as the token if the user was added
+     * successfully.
      */
-    public DataResult addNewUser(User user,UploadedFile file) {
+    public DataResult addNewUser(User user, UploadedFile file) {
         DataResult result = new DataResult();
-
-
         boolean added = daoUsers.add(user);
-        User u = getUser(user.getUsername(), user.getPassword());
 
         if (added) {
-            String token = Utils.getSHA256(u.getUsername() + u.getPassword() + new Random().nextInt(10000));
-
+            String token = Utils.getSHA256(user.getUsername() + user.getPassword() + new Random().nextInt(10000));
+            User u = getUser(user.getUsername(), user.getPassword());
             boolean isUpdateToken = daoUsers.updateUserToken(u, token);
+
             if (isUpdateToken) {
                 result.setResult("1");
                 result.setData(token);
-                
-                setUserProfileImage(file, token);
+
+                // Save the uploaded file with the unique filename
+                String path = "/var/www/html/resources/users/";
+                String pathUsers = "/resources/users/";
+                String uniqueFilename = "default.png";
+                File uploadedFile;
+
+                if (file != null && file.size() > 0 && file.filename().toLowerCase().endsWith(".jpg")) {
+                    String randomString = RandomStringUtils.randomAlphanumeric(10);
+                    String timestamp = Long.toString(System.currentTimeMillis());
+                    uniqueFilename = randomString + "-" + timestamp + ".jpg";
+                    uploadedFile = new File(path + uniqueFilename);
+
+                    int suffix = 1;
+                    while (uploadedFile.exists()) {
+                        uniqueFilename = randomString + "-" + timestamp + "-" + suffix + ".jpg";
+                        uploadedFile = new File(path + uniqueFilename);
+                        suffix++;
+                    }
+
+                    try {
+                        FileUtils.copyInputStreamToFile(file.content(), uploadedFile);
+                        System.out.println("Saving image" + file.filename() + " as: " + uploadedFile);
+
+                        // Update the user with the path to the profile image
+                        String pathImage = pathUsers + uniqueFilename;
+                        boolean updated = daoUsers.setUserPathPicture(u.getId(), pathImage);
+
+                        if (updated) {
+                            System.out.println("User image path updated: " + u.getUsername());
+                        } else {
+                            System.out.println("Failed to update user image path: " + u.getUsername());
+                        }
+                    } catch (IOException ex) {
+                        System.out.println("Error POST FILE:" + ex.toString());
+                        result.setResult("0");
+                        result.setData("Failed when trying to upload the image to server");
+                        return result;
+                    }
+
+                } else {
+                    // Update the user with the path to the default profile image
+                    String pathImage = pathUsers + uniqueFilename;
+                    boolean updated = daoUsers.setUserPathPicture(u.getId(), pathImage);
+
+                    if (updated) {
+                        System.out.println("User image path updated to default image: " + u.getUsername());
+                    } else {
+                        System.out.println("Failed to update user image path to default image: " + u.getUsername());
+                    }
+                }
+
             } else {
                 result.setResult("2");
                 result.setData("Failed to validate token");
@@ -160,6 +215,7 @@ public class Model {
 
         return result;
     }
+
 
     /**
      * Method that verifies if the token sent by the client exists in the
@@ -300,75 +356,80 @@ public class Model {
      * @return 1 if the image was saved correctly, 2 if the file does not meet
      * the required extension or 0 if the image cannot be added.
      */
-    public DataResult setUserProfileImage(UploadedFile file,String token) {
-        DataResult result = new DataResult();
-
-        try {
-            //Verify that the file has a .jpg extension
-            if (file != null && !FilenameUtils.getExtension(file.filename()).equalsIgnoreCase("jpg")) {
-                result.setResult("2");
-                result.setData("Only jpg files can be uploaded");
-                return result;
-            }
-            
-            //SERVER    
-            // Create a unique filename for the uploaded file
-            String randomString = RandomStringUtils.randomAlphanumeric(10);
-            String timestamp = Long.toString(System.currentTimeMillis());
-            String uniqueFilename = randomString + "-" + timestamp + ".jpg";
-            
-            // Check if the filename already exists in the server folder
-            String path = "/var/www/html/resources/users/";
-            File uploadedFile;
-            if (file != null) {
-                uploadedFile = new File(path + file.filename());
-            } else {
-                uploadedFile = new File(path + "default.png");
-            }
-            int suffix = 1;
-            
-            while (uploadedFile.exists()) {
-                uniqueFilename = randomString + "-" + timestamp + "-" + suffix + ".jpg";
-                uploadedFile = new File(path + uniqueFilename);
-                suffix++;
-            }
-
-            // Save the uploaded file with the unique filename
-            if (file != null) {
-                FileUtils.copyInputStreamToFile(file.content(), uploadedFile);
-                System.out.println("Saving image" + file.filename() + " as: " + uploadedFile);
-            }
-
-            if (uploadedFile.exists()) {
-                result.setResult("1");
-                result.setData("Image saved successfully");
-                
-                User user = daoUsers.findUserByToken(token);
-                if(user != null){
-                    System.out.println("Se encontro un usuario");
-                    System.out.println(user.toString());
-                    boolean updated = daoUsers.setUserPathPicture(user.getId(),path+uniqueFilename);
-                    if (updated) {
-                        System.out.println("Se ha asignado una imagen al usuario: " + user.getUsername());
-                    }else{
-                        System.out.println("No se pudo asignar la imagen");
-                    }
-                    
-                }
-            } else {
-                result.setResult("0");
-                result.setData("Can't save image to server");
-            }
-        } 
-        catch (IOException ex) {
-            System.out.println("Error POST FILE:" + ex.toString());
-            result.setResult("0");
-            result.setData("Failed when trying to upload the image to server");
-        } 
-        
-        return result;
-    }
-
+//    public DataResult setUserProfileImage(UploadedFile file,String token) {
+//        DataResult result = new DataResult();
+//
+//        try {
+//            //Verify that the file has a .jpg extension
+//            if (file != null && !FilenameUtils.getExtension(file.filename()).equalsIgnoreCase("jpg")) {
+//                result.setResult("2");
+//                result.setData("Only jpg files can be uploaded");
+//                return result;
+//            }
+//            
+//            //SERVER    
+//            // Create a unique filename for the uploaded file
+//            String randomString = RandomStringUtils.randomAlphanumeric(10);
+//            String timestamp = Long.toString(System.currentTimeMillis());
+//            String uniqueFilename = randomString + "-" + timestamp + ".jpg";
+//            
+//            // Check if the filename already exists in the server folder
+//            String path = "/var/www/html/resources/users/";
+//            String pathUsers = "/resources/users/";
+//            File uploadedFile;
+//            
+//            if (file != null) {
+//                uploadedFile = new File(path + file.filename());
+//            } else {
+//                uploadedFile = new File(path + "default.png");
+//                if (!uploadedFile.exists()) {
+//                    InputStream defaultImage = getClass().getResourceAsStream("/default.png");
+//                    FileUtils.copyInputStreamToFile(defaultImage, uploadedFile);
+//                }
+//            }
+//            int suffix = 1;
+//            
+//            while (uploadedFile.exists()) {
+//                uniqueFilename = randomString + "-" + timestamp + "-" + suffix + ".jpg";
+//                uploadedFile = new File(path + uniqueFilename);
+//                suffix++;
+//            }
+//
+//            // Save the uploaded file with the unique filename
+//            if (file != null) {
+//                FileUtils.copyInputStreamToFile(file.content(), uploadedFile);
+//                System.out.println("Saving image" + file.filename() + " as: " + uploadedFile);
+//            }
+//
+//            if (uploadedFile.exists()) {
+//                result.setResult("1");
+//                result.setData("Image saved successfully");
+//                
+//                User user = daoUsers.findUserByToken(token);
+//                if(user != null){
+//                    System.out.println("Se encontro un usuario");
+//                    System.out.println(user.toString());
+//                    boolean updated = daoUsers.setUserPathPicture(user.getId(),pathUsers+uniqueFilename);
+//                    if (updated) {
+//                        System.out.println("Se ha asignado una imagen al usuario: " + user.getUsername());
+//                    }else{
+//                        System.out.println("No se pudo asignar la imagen");
+//                    }
+//                    
+//                }
+//            } else {
+//                result.setResult("0");
+//                result.setData("Can't save image to server");
+//            }
+//        } 
+//        catch (IOException ex) {
+//            System.out.println("Error POST FILE:" + ex.toString());
+//            result.setResult("0");
+//            result.setData("Failed when trying to upload the image to server");
+//        } 
+//        
+//        return result;
+//    }
     //--------------------------------------------------RECIPES-------------------------------------------------------------
     //--------------------------------------------------RECIPES-------------------------------------------------------------
     public DataResult getAllRecipes() {
@@ -511,6 +572,25 @@ public class Model {
             result.setResult("0");
             result.setData("Failed when trying to modify recipe");
         }
+        return result;
+    }
+    
+    public DataResult findFullRecipe(long id) {
+        DataResult result = new DataResult();
+
+        Recipe recipe = daoRecipe.findFullRecipe(id);
+
+        if (recipe != null) {
+
+            result.setResult("1");
+            result.setData(recipe);
+
+        } else {
+            result.setResult("0");
+            result.setData("error finding Recipe");
+
+        }
+
         return result;
     }
 

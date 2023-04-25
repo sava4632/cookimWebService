@@ -31,11 +31,11 @@ public class CookimWebService {
         //HTTPS      
         SSLPlugin plugin = new SSLPlugin(conf -> {    
             //local
-//            conf.pemFromPath("src\\SSL\\cert.pem",
-//                    "src\\SSL\\key.pem", "cookimadmin");
+            conf.pemFromPath("src\\SSL\\cert.pem",
+                    "src\\SSL\\key.pem", "cookimadmin");
             //ubuntu
-            conf.pemFromPath("/app/SSL/cert.pem",
-                    "/app/SSL/key.pem", "cookimadmin");
+//            conf.pemFromPath("/app/SSL/cert.pem",
+//                    "/app/SSL/key.pem", "cookimadmin");
             // additional configuration options
             conf.insecurePort = 7070;
             conf.host = null;      // Host to bind to, by default it will bind to all interfaces.
@@ -163,6 +163,32 @@ public class CookimWebService {
             ctx.result(gson.toJson(result));
             System.out.println("----------------------------------------------------------------------------------------------------------");
         });
+        
+        app.post("/Cookim/steps", ctx -> {//http://localhost:7070/Cookim/steps
+            System.out.println("----------------------------------------------------------------------------------------------------------");
+            System.out.println(" --------------------Receiving HTTP POST request on the route: " + ctx.path() + "-----------------------");
+            String idStr = ctx.formParam("id");
+            long id = Long.parseLong(idStr);
+            System.out.println(idStr);
+            
+            DataResult result = model.findFullRecipe(id);
+            System.out.println(result.toString());
+            Gson gson = new Gson();
+            ctx.result(gson.toJson(result));
+                        System.out.println("----------------------------------------------------------------------------------------------------------");
+
+        });
+        
+        app.get("/hello", ctx -> ctx.result("Hello World"));
+        
+        app.get("/Cookim/hello", ctx -> {//http://localhost:7070/Cookim/steps
+            System.out.println("----------------------------------------------------------------------------------------------------------");
+            System.out.println(" --------------------Receiving HTTP POST request on the route: " + ctx.path() + "-----------------------");
+            String text = "Hello world";
+                        System.out.println("----------------------------------------------------------------------------------------------------------");
+
+        });
+        
 
         //-----------------------------------------USERS METODS---------------------------------------------------
         //-----------------------------------------USERS METODS---------------------------------------------------
@@ -228,26 +254,26 @@ public class CookimWebService {
         });
 
         //UPLOAD PROFILE PICTURE METOD
-        app.post("/Cookim/upload/profile_picture", ctx -> {
-            System.out.println("----------------------------------------------------------------------------------------------------------");
-            System.out.println(" --------------------Receiving HTTPS POST request on the route: " + ctx.path() + "-----------------------");
-            String token = ctx.header("Authorization").replace("Bearer ", "");
-            ctx.uploadedFiles("binaryFile").forEach(file -> {
-                DataResult result = model.setUserProfileImage(file,token);
-                
-                if(result.getResult().equals("1")){
-                    System.out.println("File " + file.filename() + " saved successfully ");
-                }
-                else{
-                    System.out.println("File " + file.filename() + " could not save" + "\n" +
-                            "CAUSE: " + result.getData());
-                }
-                
-                Gson gson = new Gson();
-                ctx.result(gson.toJson(result));
-            });
-            System.out.println("----------------------------------------------------------------------------------------------------------");
-        });
+//        app.post("/Cookim/upload/profile_picture", ctx -> {
+//            System.out.println("----------------------------------------------------------------------------------------------------------");
+//            System.out.println(" --------------------Receiving HTTPS POST request on the route: " + ctx.path() + "-----------------------");
+//            String token = ctx.header("Authorization").replace("Bearer ", "");
+//            ctx.uploadedFiles("binaryFile").forEach(file -> {
+//                DataResult result = model.setUserProfileImage(file,token);
+//                
+//                if(result.getResult().equals("1")){
+//                    System.out.println("File " + file.filename() + " saved successfully ");
+//                }
+//                else{
+//                    System.out.println("File " + file.filename() + " could not save" + "\n" +
+//                            "CAUSE: " + result.getData());
+//                }
+//                
+//                Gson gson = new Gson();
+//                ctx.result(gson.toJson(result));
+//            });
+//            System.out.println("----------------------------------------------------------------------------------------------------------");
+//        });
 
         app.post("/Cookim/sign-in", ctx -> { //http://localhost:7070/Cookim/sign-in
             System.out.println("----------------------------------------------------------------------------------------------------------");
@@ -263,11 +289,18 @@ public class CookimWebService {
             // Obtener el archivo de imagen cargado
             UploadedFile file = ctx.uploadedFile("img");
             
-
             User user = new User(username, password, full_name, email, phone, id_rol);
 
-            DataResult result = model.addNewUser(user,file);
+            DataResult result;
             
+            if (file == null) {
+                System.out.println("El archivo esta vacio");
+                 result = model.addNewUser(user,null);
+            } else {
+                System.out.println("El archivo no esta vacio");
+                result = model.addNewUser(user,file);
+            }
+
             System.out.println(result);
 
             Gson gson = new Gson();

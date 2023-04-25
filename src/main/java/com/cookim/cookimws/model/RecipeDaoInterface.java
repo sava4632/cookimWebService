@@ -16,5 +16,7 @@ public interface RecipeDaoInterface {
     public boolean likeRecipe(int num, Recipe recipe);
     public boolean modifyRecipe(Recipe recipe);
     public Recipe findRecipeById(String id);
+
+    public Recipe findFullRecipe(long id);
     
 }
