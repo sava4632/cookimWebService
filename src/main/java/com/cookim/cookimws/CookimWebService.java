@@ -31,11 +31,11 @@ public class CookimWebService {
         //HTTPS      
         SSLPlugin plugin = new SSLPlugin(conf -> {    
             //local
-            conf.pemFromPath("src\\SSL\\cert.pem",
-                    "src\\SSL\\key.pem", "cookimadmin");
+//            conf.pemFromPath("src\\SSL\\cert.pem",
+//                    "src\\SSL\\key.pem", "cookimadmin");
             //ubuntu
-//            conf.pemFromPath("/app/SSL/cert.pem",
-//                    "/app/SSL/key.pem", "cookimadmin");
+            conf.pemFromPath("/app/SSL/cert.pem",
+                    "/app/SSL/key.pem", "cookimadmin");
             // additional configuration options
             conf.insecurePort = 7070;
             conf.host = null;      // Host to bind to, by default it will bind to all interfaces.
@@ -167,9 +167,8 @@ public class CookimWebService {
         app.post("/Cookim/steps", ctx -> {//http://localhost:7070/Cookim/steps
             System.out.println("----------------------------------------------------------------------------------------------------------");
             System.out.println(" --------------------Receiving HTTP POST request on the route: " + ctx.path() + "-----------------------");
-            String idStr = ctx.formParam("id");
-            long id = Long.parseLong(idStr);
-            System.out.println(idStr);
+            String id = ctx.formParam("id");
+            System.out.println(id);
             
             DataResult result = model.findFullRecipe(id);
             System.out.println(result.toString());

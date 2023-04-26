@@ -575,10 +575,18 @@ public class Model {
         return result;
     }
     
-    public DataResult findFullRecipe(long id) {
+    public DataResult findFullRecipe(String id) {
         DataResult result = new DataResult();
 
-        Recipe recipe = daoRecipe.findFullRecipe(id);
+        Recipe recipe = daoRecipe.findRecipeById(id);
+        if(recipe.getPath() == null){
+            recipe.setPath("/resources/users/default.png");
+        }
+        List<Ingredient> ingredients = daoRecipe.findAllIngredientsByRecipe(id);
+        List<Step> steps = daoRecipe.findAllStepsByRecipe(id);
+        
+        recipe.setIngredients(ingredients);
+        recipe.setSteps(steps);
 
         if (recipe != null) {
 

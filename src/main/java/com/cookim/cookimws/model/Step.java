@@ -8,13 +8,13 @@ package com.cookim.cookimws.model;
 public class Step {
 
     
-    private int id;
-    private int recipe_id;
-    private int step_number;
+    private long id;
+    private long recipe_id;
+    private long step_number;
     private String description;
     private String path;
-    
-    public Step(int id, int recipe_id, int step_number, String description, String path) {
+
+    public Step(long id, long recipe_id, long step_number, String description, String path) {
         this.id = id;
         this.recipe_id = recipe_id;
         this.step_number = step_number;
@@ -23,30 +23,29 @@ public class Step {
     }
 
     public Step() {
-        
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
-    public int getRecipe_id() {
+    public long getRecipe_id() {
         return recipe_id;
     }
 
-    public void setRecipe_id(int recipe_id) {
+    public void setRecipe_id(long recipe_id) {
         this.recipe_id = recipe_id;
     }
 
-    public int getStep_number() {
+    public long getStep_number() {
         return step_number;
     }
 
-    public void setStep_number(int step_number) {
+    public void setStep_number(long step_number) {
         this.step_number = step_number;
     }
 
@@ -64,6 +63,11 @@ public class Step {
 
     public void setPath(String path) {
         this.path = path;
+    }
+
+    @Override
+    public String toString() {
+        return "Step{" + "id=" + id + ", recipe_id=" + recipe_id + ", step_number=" + step_number + ", description=" + description + ", path=" + path + '}';
     }
     
     

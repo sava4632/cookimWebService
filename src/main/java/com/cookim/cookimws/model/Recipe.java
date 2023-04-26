@@ -16,6 +16,7 @@ public class Recipe {
     private double rating;
     private int likes;
     private String user_name;
+    private String path;
     private List<Ingredient> ingredients;
     private List<Step> steps;
 
@@ -61,8 +62,26 @@ public class Recipe {
         this.likes = likes;
         this.user_name = user_name;
     }
-    
-    
+
+    public Recipe(long id, long id_user, String name, String description, String path_img, double rating, int likes, String user_name, String path) {
+        this.id = id;
+        this.id_user = id_user;
+        this.name = name;
+        this.description = description;
+        this.path_img = path_img;
+        this.rating = rating;
+        this.likes = likes;
+        this.user_name = user_name;
+        this.path = path;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
     
 
     public Recipe() {
@@ -153,8 +172,10 @@ public class Recipe {
 
     @Override
     public String toString() {
-        return "Recipe{" + "id=" + id + ", id_user=" + id_user + ", name=" + name + ", description=" + description + ", path_img=" + path_img + ", rating=" + rating + ", likes=" + likes + ", user_name=" + user_name + ", ingredients=" + ingredients + ", steps=" + steps + '}';
+        return "Recipe{" + "id=" + id + ", id_user=" + id_user + ", name=" + name + ", description=" + description + ", path_img=" + path_img + ", rating=" + rating + ", likes=" + likes + ", user_name=" + user_name + ", path=" + path + ", ingredients=" + ingredients + ", steps=" + steps + '}';
     }
+
+    
     
     
     

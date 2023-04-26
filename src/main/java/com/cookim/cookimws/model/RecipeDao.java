@@ -221,7 +221,10 @@ public class RecipeDao implements RecipeDaoInterface {
     public Recipe findRecipeById(String id) {
         Recipe recipe = null;
         try (Connection conn = MariaDBConnection.getConnection()) {
-            String query = "SELECT * FROM recipe WHERE id = ?";
+            String query = "SELECT r.*, u.username, u.path_img as path_img_user\n"
+                    + "FROM recipe r\n"
+                    + "INNER JOIN user u ON r.id_user  = u.id\n"
+                    + "WHERE r.id = ?;";
             PreparedStatement ps = conn.prepareStatement(query);
             ps.setString(1, id);
             ResultSet rs = ps.executeQuery();
@@ -234,7 +237,8 @@ public class RecipeDao implements RecipeDaoInterface {
                 recipe.setPath_img(rs.getString("path_img"));
                 recipe.setRating(rs.getDouble("rating"));
                 recipe.setLikes(rs.getInt("likes"));
-
+                recipe.setUser_name(rs.getString("username"));
+                recipe.setPath(rs.getString("path_img_user"));
             }
             rs.close();
             ps.close();
@@ -245,62 +249,52 @@ public class RecipeDao implements RecipeDaoInterface {
     }
 
     @Override
-    public Recipe findFullRecipe(long id) {
-        Recipe recipe = null;
+    public List<Ingredient> findAllIngredientsByRecipe(String id) {
+        List<Ingredient> ingredients = new ArrayList<>();
         try (Connection conn = MariaDBConnection.getConnection()) {
-            String query = "SELECT r.id, r.id_user, r.name, r.description, r.path_img, r.rating, r.likes, "
-                    + "ri.id as ri_id, ri.id_recipe, ri.id_ingredient, "
-                    + "i.id as ingredient_id, i.name as ingredient_name, "
-                    + "s.id as step_id, s.id_recipe as step_recipe_id, s.step_number, s.description as step_description, s.path_img as step_path_img "
-                    + "FROM recipe r "
-                    + "LEFT JOIN recipe_ingredients ri ON r.id = ri.id_recipe "
-                    + "LEFT JOIN ingredients i ON ri.id_ingredient = i.id "
-                    + "LEFT JOIN recipe_step s ON r.id = s.id_recipe "
-                    + "WHERE r.id = ?";
+            String query = "SELECT ingredients.id, ingredients.name FROM ingredients \n" +
+"                    INNER JOIN recipe_ingredients ON ingredients.id = recipe_ingredients.id_ingredient \n" +
+"                    WHERE recipe_ingredients.id_recipe = ?";
             PreparedStatement ps = conn.prepareStatement(query);
-            ps.setLong(1, id); 
+            ps.setString(1, id);
             ResultSet rs = ps.executeQuery();
-            recipe = new Recipe();
-            List<Ingredient> ingredients = new ArrayList<>();
-            List<Step> steps = new ArrayList<>();
             while (rs.next()) {
-                recipe.setId(rs.getLong("id"));
-                recipe.setId_user(rs.getLong("id_user"));
-                recipe.setName(rs.getString("name"));
-                recipe.setDescription(rs.getString("description"));
-                recipe.setPath_img(rs.getString("path_img"));
-                recipe.setRating(rs.getDouble("rating"));
-                recipe.setLikes(rs.getInt("likes"));
-
-                int ingredientId = rs.getInt("ingredient_id");
-                if (ingredientId != 0) {
-                    Ingredient ingredient = new Ingredient();
-                    ingredient.setId(rs.getInt("ri_id"));
-                    ingredient.setId_recipe(rs.getInt("id_recipe"));
-                    ingredient.setId_ingredient(rs.getInt("id_ingredient"));
-                    ingredient.setName(rs.getString("ingredient_name"));
-                    ingredients.add(ingredient);
-                }
-
-                int stepId = rs.getInt("step_id");
-                if (stepId != 0) {
-                    Step step = new Step();
-                    step.setId(stepId);
-                    step.setRecipe_id(rs.getInt("step_recipe_id"));
-                    step.setStep_number(rs.getInt("step_number"));
-                    step.setDescription(rs.getString("step_description"));
-                    step.setPath(rs.getString("step_path_img"));
-                    steps.add(step);
-                }
+                Ingredient ingredient = new Ingredient();
+                ingredient.setId(rs.getLong("id"));
+                ingredient.setName(rs.getString("name"));
+                ingredients.add(ingredient);
             }
-            recipe.setIngredients(ingredients);
-            recipe.setSteps(steps);
             rs.close();
             ps.close();
         } catch (SQLException ex) {
-            System.out.println("Failed to find recipe by id: " + ex.getMessage());
+            System.out.println("Failed to find ingredients by recipe: " + ex.getMessage());
         }
-        return recipe;
+        return ingredients;
+    }
+
+    @Override
+    public List<Step> findAllStepsByRecipe(String id) {
+        List<Step> steps = new ArrayList<>();
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            String query = "SELECT * FROM recipe_step rs  WHERE id_recipe  = ?";
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setString(1, id);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Step step = new Step();
+                step.setId(rs.getLong("id"));
+                step.setRecipe_id(rs.getLong("id_recipe"));
+                step.setStep_number(rs.getInt("step_number"));
+                step.setDescription(rs.getString("description"));
+                step.setPath(rs.getString("path_img"));
+                steps.add(step);
+            }
+            rs.close();
+            ps.close();
+        } catch (SQLException ex) {
+            System.out.println("Failed to find steps by recipe: " + ex.getMessage());
+        }
+        return steps;
     }
 
 }
