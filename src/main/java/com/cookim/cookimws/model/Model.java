@@ -585,6 +585,12 @@ public class Model {
         List<Ingredient> ingredients = daoRecipe.findAllIngredientsByRecipe(id);
         List<Step> steps = daoRecipe.findAllStepsByRecipe(id);
         
+        for(Step s : steps){
+            if(s.getPath() == null){
+                s.setPath("/resources/recipes/recipeSteps/default.jpg");
+            }
+        }
+        
         recipe.setIngredients(ingredients);
         recipe.setSteps(steps);
 

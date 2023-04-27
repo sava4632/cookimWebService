@@ -167,14 +167,25 @@ public class CookimWebService {
         app.post("/Cookim/steps", ctx -> {//http://localhost:7070/Cookim/steps
             System.out.println("----------------------------------------------------------------------------------------------------------");
             System.out.println(" --------------------Receiving HTTP POST request on the route: " + ctx.path() + "-----------------------");
-            String id = ctx.formParam("id");
-            System.out.println(id);
+            String data = ctx.header("Authorization").replace("Bearer ", "");
+            
+            String[] parts = data.split(":");
+            String token = parts[0];
+            String id = parts[1];
+            
+            
+            DataResult isAuthenticated = model.getUserByToken(token);
+            if (isAuthenticated.getResult().equals("0")) {
+                Gson gson = new Gson();
+                ctx.result(gson.toJson(isAuthenticated));
+                return;
+            }
             
             DataResult result = model.findFullRecipe(id);
             System.out.println(result.toString());
             Gson gson = new Gson();
             ctx.result(gson.toJson(result));
-                        System.out.println("----------------------------------------------------------------------------------------------------------");
+            System.out.println("----------------------------------------------------------------------------------------------------------");
 
         });
         
