@@ -607,6 +607,26 @@ public class Model {
 
         return result;
     }
+    
+    public DataResult getAllRecipesByUserToken(String token) {
+        DataResult result = new DataResult();
+        User user =  daoUsers.findUserByToken(token);
+        List<Recipe> recipes = daoRecipe.findAllRecipesByUserToken(token);
+        
+        user.setRecipes(recipes);
+        
+        if (user != null) {
+            result.setResult("1");
+            result.setData(user);
+            
+        }else{
+            result.setResult("0");
+            result.setData("Failed when trying to load the entire user profile");
+        }
+        return result;
+    }
 
     //-------------------------------------CATEGORIES-------------------------------------------------
+
+    
 }

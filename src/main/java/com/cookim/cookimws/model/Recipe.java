@@ -17,6 +17,7 @@ public class Recipe {
     private int likes;
     private String user_name;
     private String path;
+    
     private List<Ingredient> ingredients;
     private List<Step> steps;
 

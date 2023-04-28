@@ -189,16 +189,27 @@ public class CookimWebService {
 
         });
         
-        app.get("/hello", ctx -> ctx.result("Hello World"));
-        
-        app.get("/Cookim/hello", ctx -> {//http://localhost:7070/Cookim/steps
+        app.post("/Cookim/full-profile", ctx -> {//http://localhost:7070/Cookim/steps
             System.out.println("----------------------------------------------------------------------------------------------------------");
             System.out.println(" --------------------Receiving HTTP POST request on the route: " + ctx.path() + "-----------------------");
-            String text = "Hello world";
-                        System.out.println("----------------------------------------------------------------------------------------------------------");
+            String token = ctx.header("Authorization").replace("Bearer ", "");                    
+            
+            DataResult isAuthenticated = model.getUserByToken(token);
+            if (isAuthenticated.getResult().equals("0")) {
+                Gson gson = new Gson();
+                ctx.result(gson.toJson(isAuthenticated));
+                return;
+            }
+            
+            DataResult result = model.getAllRecipesByUserToken(token);
+            System.out.println(result.toString());
+            Gson gson = new Gson();
+            ctx.result(gson.toJson(result));
+            System.out.println("----------------------------------------------------------------------------------------------------------");
 
         });
         
+        app.get("/hello", ctx -> ctx.result("Hello World"));
 
         //-----------------------------------------USERS METODS---------------------------------------------------
         //-----------------------------------------USERS METODS---------------------------------------------------

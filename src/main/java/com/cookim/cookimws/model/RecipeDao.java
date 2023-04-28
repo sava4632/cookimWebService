@@ -297,4 +297,31 @@ public class RecipeDao implements RecipeDaoInterface {
         return steps;
     }
 
+    @Override
+    public List<Recipe> findAllRecipesByUserToken(String token) {
+        List<Recipe> recipes = new ArrayList<>();
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            String query = "SELECT r.* FROM recipe r INNER JOIN user u ON r.id_user = u.id WHERE u.token = ?";
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setString(1, token);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Recipe recipe = new Recipe();
+                recipe.setId(rs.getLong("id"));
+                recipe.setId_user(rs.getLong("id_user"));
+                recipe.setName(rs.getString("name"));
+                recipe.setDescription(rs.getString("description"));
+                recipe.setPath_img(rs.getString("path_img"));
+                recipe.setRating(rs.getInt("rating"));
+                recipe.setLikes(rs.getInt("likes"));
+                recipes.add(recipe);
+            }
+            rs.close();
+            ps.close();
+        } catch (SQLException ex) {
+            System.out.println("Failed to find recipes by user token: " + ex.getMessage());
+        }
+        return recipes;
+    }
+
 }

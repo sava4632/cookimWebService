@@ -11,6 +11,7 @@ public interface RecipeDaoInterface {
     public List<Recipe> findAllRecipes();
     public List<Recipe> findAllRecipesByCategory(String idCategory);
     public List<Recipe> findAllRecipesWithUser();
+    public List<Recipe> findAllRecipesByUserToken(String token);
     public boolean  addRecipe(Recipe recipe);
     public boolean deleteRecipe(String id);
     public boolean likeRecipe(int num, Recipe recipe);

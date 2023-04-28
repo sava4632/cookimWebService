@@ -1,8 +1,7 @@
 package com.cookim.cookimws.model;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.util.List;
+
 
 /**
  *
@@ -19,6 +18,22 @@ public class User {
     private String description;
     private long id_rol;
     private String token;
+    
+    private List<Recipe> recipes;
+
+    public User(String username, String password, String full_name, String email, String phone, String path_img, String description, String token, List<Recipe> recipes) {
+        this.username = username;
+        this.password = password;
+        this.full_name = full_name;
+        this.email = email;
+        this.phone = phone;
+        this.path_img = path_img;
+        this.description = description;
+        this.token = token;
+        this.recipes = recipes;
+    }
+    
+    
 
     public User(long id, String username, String password, String full_name, String email, String phone, String path_img, String description, long id_rol, String token) {
         this.id = id;
@@ -171,22 +186,20 @@ public class User {
         this.token = token;
     }
 
-    @Override
-    public String toString() {
-        return "User{" + "id=" + id + ", username=" + username + ", password=" + password + ", full_name=" + full_name + ", email=" + email + ", phone=" + phone + ", path_img=" + path_img + ", description=" + description + ", id_rol=" + id_rol + ", token=" + token + '}';
+    public List<Recipe> getRecipes() {
+        return recipes;
     }
 
-    /*public byte[] getImage() {
-    try {
-        FileInputStream fileInputStream = new FileInputStream(new File(this.path_img));
-        byte[] bytes = new byte[fileInputStream.available()];
-        fileInputStream.read(bytes);
-        fileInputStream.close();
-        return bytes;
-    } catch (IOException e) {
-        e.printStackTrace();
-        return null;
-    }*/
+    public void setRecipes(List<Recipe> recipes) {
+        this.recipes = recipes;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" + "id=" + id + ", username=" + username + ", password=" + password + ", full_name=" + full_name + ", email=" + email + ", phone=" + phone + ", path_img=" + path_img + ", description=" + description + ", id_rol=" + id_rol + ", token=" + token + ", recipes=" + recipes + '}';
+    }
+    
+    
 }
 
     
