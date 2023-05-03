@@ -2,22 +2,12 @@ package com.cookim.cookimws.model;
 
 import com.cookim.cookimws.utils.DataResult;
 import com.cookim.cookimws.utils.Utils;
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
-import com.jcraft.jsch.SftpException;
 import io.javalin.http.UploadedFile;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 import java.util.Random;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 
 /**
@@ -28,11 +18,12 @@ public class Model {
 
     UserDaoInterface daoUsers;
     RecipeDaoInterface daoRecipe;
+    IngredientDaoInterface daoIngredient;
 
     public Model() {
         daoUsers = new UserDao();
         daoRecipe = new RecipeDao();
-
+        daoIngredient = new IngredientDao();
         //loadUsers();
     }
 
@@ -253,7 +244,6 @@ public class Model {
         String token = Utils.getSHA256(username + password + new Random().nextInt(10000));
         if (u != null) {
             boolean isUpdateToken = daoUsers.updateUserToken(u, token);
-            System.out.println("A new token has been assigned to the user: ".concat(u.getUsername()));
             if (isUpdateToken) {
                 result.setResult("1");
                 result.setData(token);
@@ -290,146 +280,7 @@ public class Model {
         return result;
     }
 
-    /**
-     * Method that receives an image from the client and stores it in a remote
-     * location on the server.
-     *
-     * @param file the file to save on the server
-     * @return 1 if the image was saved correctly, 2 if the file does not meet
-     * the required extension or 0 if the image cannot be added.
-     */
-//    public DataResult setUserProfileImageRemote(UploadedFile file) {
-//        DataResult result = new DataResult();
-//        try {
-//            //Verify that the file has a .jpg extension
-//            if (!FilenameUtils.getExtension(file.filename()).equalsIgnoreCase("jpg")) {
-//                result.setResult("2");
-//                result.setData("Only jpg files can be uploaded");
-//                return result;
-//            }
-//
-//            //SERVER
-//            // Create a unique filename for the uploaded file
-//            String randomString = RandomStringUtils.randomAlphanumeric(10);
-//            String timestamp = Long.toString(System.currentTimeMillis());
-//            String uniqueFilename = randomString + "-" + timestamp + ".jpg";
-//
-//            // Connect to the remote server using SSH
-//            String username = "cookimadmin";
-//            String password = "admin";
-//            String hostname = "91.107.198.64";
-//            int port = 22;
-//            JSch jsch = new JSch();
-//            Session session = jsch.getSession(username, hostname, port);
-//            session.setPassword(password);
-//            session.setConfig("StrictHostKeyChecking", "no");
-//            session.connect();
-//
-//            // Create an SFTP channel and upload the file
-//            Channel channel = session.openChannel("sftp");
-//            channel.connect();
-//            ChannelSftp sftpChannel = (ChannelSftp) channel;
-//            String remotePath = "/var/www/resources/users/" + uniqueFilename;
-//            sftpChannel.put(file.content(), remotePath);
-//            
-//
-//            // Close the SFTP channel and SSH session
-//            sftpChannel.disconnect();
-//            session.disconnect();
-//
-//
-//            result.setResult("1");
-//            result.setData("Image saved successfully");
-//        } catch (Exception ex) {
-//            System.out.println("Error POST FILE:" + ex.toString());
-//            result.setResult("0");
-//            result.setData("Failed when trying to upload the image to server");
-//        }
-//
-//        return result;
-//    }
-    /**
-     * Method that receives an image from the client and stores it in a local
-     * location on the server.
-     *
-     * @param file the file to save on the server
-     * @return 1 if the image was saved correctly, 2 if the file does not meet
-     * the required extension or 0 if the image cannot be added.
-     */
-//    public DataResult setUserProfileImage(UploadedFile file,String token) {
-//        DataResult result = new DataResult();
-//
-//        try {
-//            //Verify that the file has a .jpg extension
-//            if (file != null && !FilenameUtils.getExtension(file.filename()).equalsIgnoreCase("jpg")) {
-//                result.setResult("2");
-//                result.setData("Only jpg files can be uploaded");
-//                return result;
-//            }
-//            
-//            //SERVER    
-//            // Create a unique filename for the uploaded file
-//            String randomString = RandomStringUtils.randomAlphanumeric(10);
-//            String timestamp = Long.toString(System.currentTimeMillis());
-//            String uniqueFilename = randomString + "-" + timestamp + ".jpg";
-//            
-//            // Check if the filename already exists in the server folder
-//            String path = "/var/www/html/resources/users/";
-//            String pathUsers = "/resources/users/";
-//            File uploadedFile;
-//            
-//            if (file != null) {
-//                uploadedFile = new File(path + file.filename());
-//            } else {
-//                uploadedFile = new File(path + "default.png");
-//                if (!uploadedFile.exists()) {
-//                    InputStream defaultImage = getClass().getResourceAsStream("/default.png");
-//                    FileUtils.copyInputStreamToFile(defaultImage, uploadedFile);
-//                }
-//            }
-//            int suffix = 1;
-//            
-//            while (uploadedFile.exists()) {
-//                uniqueFilename = randomString + "-" + timestamp + "-" + suffix + ".jpg";
-//                uploadedFile = new File(path + uniqueFilename);
-//                suffix++;
-//            }
-//
-//            // Save the uploaded file with the unique filename
-//            if (file != null) {
-//                FileUtils.copyInputStreamToFile(file.content(), uploadedFile);
-//                System.out.println("Saving image" + file.filename() + " as: " + uploadedFile);
-//            }
-//
-//            if (uploadedFile.exists()) {
-//                result.setResult("1");
-//                result.setData("Image saved successfully");
-//                
-//                User user = daoUsers.findUserByToken(token);
-//                if(user != null){
-//                    System.out.println("Se encontro un usuario");
-//                    System.out.println(user.toString());
-//                    boolean updated = daoUsers.setUserPathPicture(user.getId(),pathUsers+uniqueFilename);
-//                    if (updated) {
-//                        System.out.println("Se ha asignado una imagen al usuario: " + user.getUsername());
-//                    }else{
-//                        System.out.println("No se pudo asignar la imagen");
-//                    }
-//                    
-//                }
-//            } else {
-//                result.setResult("0");
-//                result.setData("Can't save image to server");
-//            }
-//        } 
-//        catch (IOException ex) {
-//            System.out.println("Error POST FILE:" + ex.toString());
-//            result.setResult("0");
-//            result.setData("Failed when trying to upload the image to server");
-//        } 
-//        
-//        return result;
-//    }
+    
     //--------------------------------------------------RECIPES-------------------------------------------------------------
     //--------------------------------------------------RECIPES-------------------------------------------------------------
     public DataResult getAllRecipes() {
@@ -575,6 +426,14 @@ public class Model {
         return result;
     }
     
+    /**
+     * Method that returns a complete recipe with its list of ingredients and another list with all its steps.
+     * 
+     * If any recipe or step does not have an image assigned in the database, this method assigns the image by default.
+     * 
+     * @param id the id of the recipe for which you want to see information.
+     * @return Dataresult class with a 1 and the complete recipe if everything is done correctly and a 0 with a message otherwise.
+     */
     public DataResult findFullRecipe(String id) {
         DataResult result = new DataResult();
 
@@ -627,6 +486,24 @@ public class Model {
     }
 
     //-------------------------------------CATEGORIES-------------------------------------------------
-
+    //-------------------------------------CATEGORIES-------------------------------------------------
     
+    
+    //-------------------------------------INGREDIENTS-------------------------------------------------
+    //-------------------------------------INGREDIENTS-------------------------------------------------
+    
+    public DataResult getAllIngredientsWithIdMax(String idmax) {
+        DataResult result = new DataResult();
+        List<Ingredient> ingredients = daoIngredient.getAllIngredientsWithIdMax(idmax);
+        
+        if (ingredients != null) {
+            result.setResult("1");
+            result.setData(ingredients);
+            
+        }else{
+            result.setResult("0");
+            result.setData("Failed to list ingredients list because it is null");
+        }
+        return result;
+    }
 }

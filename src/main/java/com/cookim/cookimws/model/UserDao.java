@@ -20,13 +20,20 @@ public class UserDao implements UserDaoInterface {
         result = new ArrayList<>();
     }
 
+    /**
+     * Adds a user to the database.
+     *
+     * @param user the User object representing the user to be added
+     * @return true if the user was added successfully, false otherwise
+     */
     @Override
     public boolean add(User user) {
-        try (Connection conn = MariaDBConnection.getConnection()) {
+        try (Connection conn = MariaDBConnection.getConnection()) { // get a database connection from the MariaDBConnection class
             PreparedStatement ps;
             String query = "INSERT INTO user (username, password, full_name, email, phone, path_img, id_rol)"
                     + "VALUES (?, ?, ?, ?, ?, ?, ?)";
             ps = conn.prepareStatement(query);
+            // set the values of the prepared statement based on the user object
             ps.setString(1, user.getUsername());
             ps.setString(2, user.getPassword());
             ps.setString(3, user.getFull_name());
@@ -34,15 +41,21 @@ public class UserDao implements UserDaoInterface {
             ps.setString(5, user.getPhone());
             ps.setString(6, user.getPath_img());
             ps.setLong(7, user.getId_rol());
-            int rowsInserted = ps.executeUpdate(); //obtiene el numero de filas modificadas en la base de datos.
+            int rowsInserted = ps.executeUpdate(); // execute the insert query and get the number of rows inserted
             ps.close();
-            return rowsInserted > 0;
-        } catch (Exception e) {
+            return rowsInserted > 0; // return true if at least one row was inserted, false otherwise
+        } catch (Exception e) { // catch any exception that occurs
             System.out.println("failed to add user : " + e.toString());
-            return false;
+            return false; // return false if an exception occurs
         }
     }
 
+    /**
+     * Deletes a user from the database based on the user's token.
+     *
+     * @param token the token of the user to be deleted
+     * @return true if the user was deleted successfully, false otherwise
+     */
     @Override
     public boolean deleteUser(String token) {
         try (Connection conn = MariaDBConnection.getConnection()) {
@@ -59,10 +72,18 @@ public class UserDao implements UserDaoInterface {
             return false;
         }
     }
-    
+
+    /**
+     *
+     * Updates the information of an existing user in the database.
+     *
+     * @param user the User object with the updated user data.
+     *
+     * @return true if the user was successfully updated, false otherwise.
+     */
     @Override
     public boolean modifyUser(User user) {
-        try (Connection conn = MariaDBConnection.getConnection()){
+        try (Connection conn = MariaDBConnection.getConnection()) {
             PreparedStatement ps;
             String query = "UPDATE user SET username=?, password=?, full_name=?, email=?, phone=?, path_img=?, description=?, id_rol=?, token=? WHERE token=?";
             ps = conn.prepareStatement(query);
@@ -76,7 +97,7 @@ public class UserDao implements UserDaoInterface {
             ps.setLong(8, user.getId_rol());
             ps.setString(9, user.getToken());
             ps.setString(10, user.getToken());
-            
+
             int rowsUpdated = ps.executeUpdate();
             ps.close();
             return rowsUpdated > 0;
@@ -86,6 +107,15 @@ public class UserDao implements UserDaoInterface {
         }
     }
 
+    /**
+     *
+     * Validates a user's credentials by checking if there is a user with the
+     * given username and password in the database.
+     *
+     * @param user the user whose credentials to validate
+     * @return true if the user's credentials are valid, false otherwise
+     *
+     */
     @Override
     public boolean validate(User user) {
         try (Connection conn = MariaDBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM user WHERE username = ? AND password = ?")) {
@@ -101,7 +131,17 @@ public class UserDao implements UserDaoInterface {
             return false;
         }
     }
-    
+
+    /**
+     *
+     * This method checks if a user with the given token exists in the database
+     * and returns true if found.
+     *
+     * @param token the token to search for in the database
+     * @return true if a user with the given token exists in the database, false
+     * otherwise
+     * @throws Exception if an error occurs while querying the database
+     */
     @Override
     public boolean autoLogin(String token) {
         try (Connection conn = MariaDBConnection.getConnection()) {
@@ -122,6 +162,15 @@ public class UserDao implements UserDaoInterface {
         }
     }
 
+    /**
+     *
+     * This method retrieves a list of all users from the database and returns
+     * it as a List<User>.
+     *
+     * @return a List<User> containing all users in the database, or null if an
+     * error occurs while querying the database
+     * @throws Exception if an error occurs while querying the database
+     */
     @Override
     public List<User> findAllUsers() {
         //conn = MariaDBConnection.getConnection();
@@ -155,6 +204,17 @@ public class UserDao implements UserDaoInterface {
         return result;
     }
 
+    /**
+     *
+     * This method searches the database for a user with the given username and
+     * password.
+     *
+     * @param username the username of the user to search for
+     * @param password the password of the user to search for
+     * @return a User object containing the details of the user if found, or
+     * null if no user with the given credentials exists in the database
+     * @throws Exception if an error occurs while querying the database
+     */
     @Override
     public User findUser(String username, String password) {
         User user = null;
@@ -188,6 +248,16 @@ public class UserDao implements UserDaoInterface {
         return user;
     }
 
+    /**
+     *
+     * This method updates the token of the given user in the database.
+     *
+     * @param user the User object to update in the database
+     * @param token the new token to assign to the user
+     * @return true if the user's token was successfully updated in the
+     * database, false otherwise
+     * @throws Exception if an error occurs while updating the database
+     */
     @Override
     public boolean updateUserToken(User user, String token) {
         try (Connection conn = MariaDBConnection.getConnection()) {
@@ -206,6 +276,14 @@ public class UserDao implements UserDaoInterface {
         }
     }
 
+    /**
+     *
+     * This method finds a user in the database by their token.
+     *
+     * @param token the token of the user to find in the database
+     * @return the User object with the given token if found, null otherwise
+     * @throws Exception if an error occurs while searching the database
+     */
     @Override
     public User findUserByToken(String token) {
         User user = null;
@@ -241,6 +319,14 @@ public class UserDao implements UserDaoInterface {
         return user;
     }
 
+    /**
+     *
+     * This method updates the path of a user's picture in the database.
+     *
+     * @param id the id of the user whose picture path is being updated
+     * @param path the new path for the user's picture
+     * @return true if the update was successful, false otherwise
+     */
     @Override
     public boolean setUserPathPicture(long id, String path) {
         boolean result = false;
