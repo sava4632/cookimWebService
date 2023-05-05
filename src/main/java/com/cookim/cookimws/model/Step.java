@@ -1,18 +1,30 @@
 
 package com.cookim.cookimws.model;
 
+import io.javalin.http.UploadedFile;
+
 /**
  *
  * @author Samuel
  */
 public class Step {
 
-    
+    private UploadedFile file;
     private long id;
     private long recipe_id;
     private long step_number;
     private String description;
     private String path;
+
+    //ADD RECIPE CONSTRUCTOR
+    public Step(UploadedFile file, long recipe_id, long step_number, String description) {
+        this.file = file;
+        this.recipe_id = recipe_id;
+        this.step_number = step_number;
+        this.description = description;
+    }
+    
+    
 
     public Step(long id, long recipe_id, long step_number, String description, String path) {
         this.id = id;
@@ -64,6 +76,16 @@ public class Step {
     public void setPath(String path) {
         this.path = path;
     }
+
+    public UploadedFile getFile() {
+        return file;
+    }
+
+    public void setFile(UploadedFile file) {
+        this.file = file;
+    }
+    
+    
 
     @Override
     public String toString() {

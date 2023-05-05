@@ -1,13 +1,20 @@
 package com.cookim.cookimws.model;
 
+
+
+import java.io.File;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+
 
 /**
  *
  * @author cookimadmin
  */
-public class Recipe {
+public class Recipe implements Serializable{
+    private File file;
+    private String base64Image;
     private long id;
     private long id_user;
     private String name;
@@ -20,8 +27,35 @@ public class Recipe {
     
     private List<Ingredient> ingredients;
     private List<Step> steps;
+    
 
-    public Recipe(long id, long id_user, String name, String description, String path_img, double rating, int likes,List<Ingredient> ingredients,  List<Step> steps) {
+    //ADD RECIPE CONSTRUCTOR
+
+    public Recipe(String name, String description, int likes) {
+        this.name = name;
+        this.description = description;
+        this.likes = likes;
+    }
+
+    public Recipe(File file, String name, String description, int likes) {
+        this.file = file;
+        this.name = name;
+        this.description = description;
+        this.likes = likes;
+    }
+    
+    
+
+    public Recipe(File file, String name, String description, int likes, List<Ingredient> ingredients, List<Step> steps) {
+        this.file = file;
+        this.name = name;
+        this.description = description;
+        this.likes = likes;
+        this.ingredients = ingredients;
+        this.steps = steps;
+    }
+
+    public Recipe(long id, long id_user, String name, String description, String path_img, double rating, int likes, List<Ingredient> ingredients, List<Step> steps) {
         this.id = id;
         this.id_user = id_user;
         this.name = name;
@@ -87,9 +121,18 @@ public class Recipe {
 
     public Recipe() {
     }
-    
-    
 
+    public String getBase64Image() {
+        return base64Image;
+    }
+
+    public void setBase64Image(String base64Image) {
+        this.base64Image = base64Image;
+    }
+    
+    
+    
+    
     public long getId() {
         return id;
     }
@@ -171,11 +214,19 @@ public class Recipe {
         this.steps = steps;
     }
 
-    @Override
-    public String toString() {
-        return "Recipe{" + "id=" + id + ", id_user=" + id_user + ", name=" + name + ", description=" + description + ", path_img=" + path_img + ", rating=" + rating + ", likes=" + likes + ", user_name=" + user_name + ", path=" + path + ", ingredients=" + ingredients + ", steps=" + steps + '}';
+    public File getFile() {
+        return file;
     }
 
+    public void setFile(File file) {
+        this.file = file;
+    }
+
+    @Override
+    public String toString() {
+        return "Recipe{" + "file=" + file + ", id=" + id + ", id_user=" + id_user + ", name=" + name + ", description=" + description + ", path_img=" + path_img + ", rating=" + rating + ", likes=" + likes + ", user_name=" + user_name + ", path=" + path + ", ingredients=" + ingredients + ", steps=" + steps + '}';
+    }
+    
     
     
     

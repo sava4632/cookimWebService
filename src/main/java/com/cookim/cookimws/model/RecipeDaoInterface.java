@@ -45,7 +45,7 @@ public interface RecipeDaoInterface {
      * @param recipe Recipe object to be added.
      * @return True if the recipe was successfully added, false otherwise.
      */
-    public boolean addRecipe(Recipe recipe);
+    public boolean addRecipe(String token,Recipe recipe);
 
     /**
      * Deletes a recipe from the system.
@@ -95,5 +95,8 @@ public interface RecipeDaoInterface {
      * @return List of all steps for the specified recipe.
      */
     public List<Step> findAllStepsByRecipe(String id);
+    
+    public Recipe findRecipeByUserTokenAndRecipe(String token,Recipe recipe);
+    public boolean setRecipePathImage(long id, String pathImage);
 
 }

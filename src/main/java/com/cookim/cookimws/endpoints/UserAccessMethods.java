@@ -156,10 +156,10 @@ public class UserAccessMethods {
         DataResult result;
 
         if (file == null) {
-            System.out.println("El archivo esta vacio");
+            System.out.println("The file is empty");
             result = model.addNewUser(user, null);
         } else {
-            System.out.println("El archivo no esta vacio");
+            System.out.println("The file is not empty");
             result = model.addNewUser(user, file);
         }
 

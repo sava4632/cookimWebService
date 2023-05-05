@@ -63,30 +63,35 @@ public class RecipeDao implements RecipeDaoInterface {
      * @return true if the recipe was successfully added, false otherwise
      */
     @Override
-    public boolean addRecipe(Recipe recipe) {
+    public boolean addRecipe(String token, Recipe recipe) {
         boolean result = false;
         try (Connection conn = MariaDBConnection.getConnection()) {
-            PreparedStatement ps;
-            String query = "INSERT INTO recipe(id_user, name, description, path_img, rating, likes) VALUES (?, ?, ?, ?, ?, ?);";
-            ps = conn.prepareStatement(query);
-            ps.setLong(1, recipe.getId_user());
-            ps.setString(2, recipe.getName());
-            ps.setString(3, recipe.getDescription());
-            ps.setString(4, recipe.getPath_img());
-            ps.setDouble(5, recipe.getRating());
-            ps.setInt(6, recipe.getLikes());
-
-            int rowsInserted = ps.executeUpdate();
-            if (rowsInserted > 0) {
-                result = true;
+            // Obtener el id_user correspondiente al token pasado como parámetro
+            PreparedStatement psUserId = conn.prepareStatement("SELECT id FROM user WHERE token = ?");
+            psUserId.setString(1, token);
+            ResultSet rs = psUserId.executeQuery();
+            if (rs.next()) {
+                long idUser = rs.getLong("id");
+                PreparedStatement ps;
+                String query = "INSERT INTO recipe(id_user, name, description, likes) VALUES (?, ?, ?, ?);";
+                ps = conn.prepareStatement(query);
+                ps.setLong(1, idUser);
+                ps.setString(2, recipe.getName());
+                ps.setString(3, recipe.getDescription());
+                ps.setInt(4, recipe.getLikes());
+                int rowsInserted = ps.executeUpdate();
+                if (rowsInserted > 0) {
+                    result = true;
+                }
+                ps.close();
             }
-            ps.close();
+            rs.close();
+            psUserId.close();
         } catch (SQLException ex) {
             System.out.println("Failed to add recipe: " + ex.getMessage());
         }
         return result;
     }
-
     /**
      *
      * Deletes a recipe from the database.
@@ -409,5 +414,53 @@ public class RecipeDao implements RecipeDaoInterface {
         }
         return recipes;
     }
+
+    @Override
+    public Recipe findRecipeByUserTokenAndRecipe(String token, Recipe recipe) {
+        Recipe result = null;
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            String query = "SELECT r.* FROM recipe r INNER JOIN user u ON r.id_user = u.id WHERE u.token = ? AND r.name = ? AND r.description = ?";
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setString(1, token);
+            ps.setString(2, recipe.getName());
+            ps.setString(3, recipe.getDescription());
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                result = new Recipe();
+                result.setId(rs.getLong("id"));
+                result.setId_user(rs.getLong("id_user"));
+                result.setName(rs.getString("name"));
+                result.setDescription(rs.getString("description"));
+                result.setPath_img(rs.getString("path_img"));
+                result.setRating(rs.getInt("rating"));
+                result.setLikes(rs.getInt("likes"));
+            }
+            rs.close();
+            ps.close();
+        } catch (SQLException ex) {
+            System.out.println("Failed to find recipe by user token and recipe: " + ex.getMessage());
+        }
+        return result;
+    }
+
+    @Override
+    public boolean setRecipePathImage(long id, String pathImage) {
+        boolean result = false;
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            String query = "UPDATE recipe SET path_img = ? WHERE id = ?";
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setString(1, pathImage);
+            ps.setLong(2, id);
+            int rowsUpdated = ps.executeUpdate();
+            if (rowsUpdated > 0) {
+                result = true;
+            }
+            ps.close();
+        } catch (SQLException ex) {
+            System.out.println("Failed to set recipe path image: " + ex.getMessage());
+        }
+        return result;
+    }
+
 
 }

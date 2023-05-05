@@ -372,17 +372,85 @@ public class Model {
      * @param recipe the new recipe to add
      * @return 1 if the recipe was added successfully, 0 otherwise
      */
-    public DataResult addNewRecipe(Recipe recipe) {
+    public DataResult addNewRecipe(Recipe recipe,String token) {
         DataResult result = new DataResult();
-        boolean added = daoRecipe.addRecipe(recipe);
-
-        if (added) {
-            result.setResult("1");
-            result.setData("Recipe added successfully");
-        } else {
-            result.setResult("0");
-            result.setData("Failed when trying to add a new recipe");
-        }
+        
+//        Recipe r = new Recipe(recipe.getName(),recipe.getDescription(),recipe.getLikes());
+//        boolean added = daoRecipe.addRecipe(token,r);  
+//        Recipe rp = daoRecipe.findRecipeByUserTokenAndRecipe(token,recipe);
+//
+//        
+//
+//        if (added && recipe.getFile() != null) {
+//            //UPLOAD RECIPE IMAGE TO SERVER NGINX
+//            // Save the uploaded file with the unique filename
+//            UploadedFile file = recipe.getFile();
+//            String path = "/var/www/html/resources/recipes/";
+//            String pathRecipe = "/resources/recipes/";
+//            String uniqueFilename = "default.png";
+//            File uploadedFile;
+//            
+//           
+//            if (file != null && file.size() > 0 && file.filename().toLowerCase().endsWith(".jpg")) {
+//                    String randomString = RandomStringUtils.randomAlphanumeric(10);
+//                    String timestamp = Long.toString(System.currentTimeMillis());
+//                    uniqueFilename = randomString + "-" + timestamp + ".jpg";
+//                    uploadedFile = new File(path + uniqueFilename);
+//
+//                    int suffix = 1;
+//                    while (uploadedFile.exists()) {
+//                        uniqueFilename = randomString + "-" + timestamp + "-" + suffix + ".jpg";
+//                        uploadedFile = new File(path + uniqueFilename);
+//                        suffix++;
+//                    }
+//
+//                    try {
+//                        FileUtils.copyInputStreamToFile(file.content(), uploadedFile);
+//                        System.out.println("Saving image" + file.filename() + " as: " + uploadedFile);
+//
+//                        // Update the user with the path to the profile image
+//                        String pathImage = pathRecipe + uniqueFilename;
+//                        boolean updated = daoRecipe.setRecipePathImage(rp.getId(), pathImage);
+//
+//                        if (updated) {
+//                            System.out.println("Recipe image path updated: " + rp.getName());
+//                        } else {
+//                            System.out.println("Failed to update recipe image path: " + rp.getName());
+//                        }
+//                    } catch (IOException ex) {
+//                        System.out.println("Error POST FILE:" + ex.toString());
+//                        result.setResult("0");
+//                        result.setData("Failed when trying to upload the image to server");
+//                        return result;
+//                    }
+//
+//                } else {
+//                    // Update the user with the path to the default profile image
+//                    String pathImage = pathRecipe + uniqueFilename;
+//                    boolean updated = daoUsers.setUserPathPicture(rp.getId(), pathImage);
+//
+//                    if (updated) {
+//                        System.out.println("Recipe image path updated to default image: " + rp.getName());
+//                    } else {
+//                        System.out.println("Failed to update recipe image path to default image: " + rp.getName());
+//                    }
+//                }
+//                //ADD INGREDIENTS TO RECIPE
+//                List<Ingredient> ingredients = recipe.getIngredients();
+//               
+//                //ADD STEPS TO RECIPE
+//                List<Step> steps = recipe.getSteps();
+//                
+//            result.setResult("1");
+//            result.setData("Recipe added successfully");
+//        } else {
+//            if (recipe.getFile() == null) {
+//                System.out.println("El FIlE ES NULO");
+//                System.out.println(recipe.getFile().content().toString());
+//            }
+//            result.setResult("0");
+//            result.setData("Failed when trying to add a new recipe");
+//        }
         return result;
     }
 
