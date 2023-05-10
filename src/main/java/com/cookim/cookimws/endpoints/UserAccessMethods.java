@@ -33,7 +33,7 @@ public class UserAccessMethods {
             
             
             app.get(props.getProperty("users"), this::getAllUsers);
-            app.post(props.getProperty("get_user_by_token"), this::getUserByToken);
+            app.post(props.getProperty("get_user_home_data"), this::getUserHomeData);
             app.post(props.getProperty("modify_user"), this::modifyUser);
             app.post(props.getProperty("delete_user"), this::deleteUser);
             app.post(props.getProperty("create_user"), this::createUser);
@@ -41,6 +41,9 @@ public class UserAccessMethods {
             app.post(props.getProperty("login"), this::login);
             app.post(props.getProperty("like_recipe"), this::likeRecipe);
             app.post(props.getProperty("logout"), this::logout);
+            app.post(props.getProperty("user_profile"), this::getUserProfile);
+            app.post(props.getProperty("my_profile"), this::myProfile);
+            app.post(props.getProperty("user_favorite_recipes"), this::favoriteRecipes);
         } catch (IOException ex) {
             LOGGER.error("Error loading properties file: {}", ex.getMessage());
         }
@@ -57,11 +60,18 @@ public class UserAccessMethods {
         LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
     }
 
-    public void getUserByToken(io.javalin.http.Context ctx) {
+    public void getUserHomeData(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
         LOGGER.info("Receiving HTTP POST request on the route: {}", ctx.path());
         String token = ctx.header("Authorization").replace("Bearer ", "");
         LOGGER.info("The user with the token: {} tries to get into his profile...", token);
+        
+        DataResult isAuthenticated = model.getUserByToken(token);
+        if (isAuthenticated.getResult().equals("0")) {
+            Gson gson = new Gson();
+            ctx.result(gson.toJson(isAuthenticated));
+            return;
+        }
 
         DataResult result = model.getUserByToken(token);
         LOGGER.info("The user with the token: {} goes to his profile", token);
@@ -207,15 +217,28 @@ public class UserAccessMethods {
     public void likeRecipe(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
         LOGGER.info("Receiving HTTP POST request on the route: {}", ctx.path());
-        System.out.println("user tries to update Recipe");
-        String act = ctx.formParam("num");
-        String recipe_id = ctx.formParam("recipe_id");
-
-        int num = Integer.parseInt(act);
-
-        System.out.println(act + " " + recipe_id);
-
-        DataResult result = model.likeRecipe(num, recipe_id);
+        String data = ctx.header("Authorization").replace("Bearer ", "");
+        String[] parts = data.split(":");
+        String token = parts[0];
+        String action = parts[1];
+        String recipe_id = parts[2];
+        int num = Integer.parseInt(action);
+        
+        LOGGER.info("Data: {}", data);
+        
+        DataResult isAuthenticated = model.getUserByToken(token);
+        if (isAuthenticated.getResult().equals("0")) {
+            Gson gson = new Gson();
+            ctx.result(gson.toJson(isAuthenticated));
+            return;
+        }
+        
+        if(num == 1){
+            LOGGER.info("The user is trying to like the recipe");
+        }else{
+            LOGGER.info("The user is trying to remove the like from the recipe");
+        }
+        DataResult result = model.likeRecipe(token,num, recipe_id);
         Gson gson = new Gson();
         System.out.println(gson.toJson(result));
 
@@ -257,4 +280,84 @@ public class UserAccessMethods {
 //            ctx.result(gson.toJson(result));
 //            System.out.println("----------------------------------------------------------------------------------------------------------");
 //        });
+    
+    public void myProfile(io.javalin.http.Context ctx) {
+        LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
+        LOGGER.info("Receiving HTTP POST request on the route: {}", ctx.path());
+        String data = ctx.header("Authorization").replace("Bearer ", "");
+
+        String[] parts = data.split(":");
+        String token = parts[0];
+        String id = parts[1];
+        LOGGER.info("Data: {}", token + " " + id);
+
+        DataResult isAuthenticated = model.getUserByToken(token);
+        if (isAuthenticated.getResult().equals("0")) {
+            Gson gson = new Gson();
+            ctx.result(gson.toJson(isAuthenticated));
+            return;
+        }
+
+        DataResult result = model.getAllRecipesByUserToken(token);
+        LOGGER.info("Result of the request: {}", result.toString());
+        Gson gson = new Gson();
+        ctx.result(gson.toJson(result));
+        LOGGER.info("Sent HTTP response with status code: {} at {}", ctx.status(), LocalDateTime.now());
+        LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
+    }
+    
+    public void getUserProfile(io.javalin.http.Context ctx) {
+        LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
+        LOGGER.info("Receiving HTTP POST request on the route: {}", ctx.path());
+        String data = ctx.header("Authorization").replace("Bearer ", "");
+
+        String[] parts = data.split(":");
+        String token = parts[0];
+        String id = parts[1];
+        
+        LOGGER.info("Data: {}", token + " " + id);
+
+        DataResult isAuthenticated = model.getUserByToken(token);
+        if (isAuthenticated.getResult().equals("0")) {
+            LOGGER.info("Authenticated: {}", "Usuario no encontrado");
+            Gson gson = new Gson();
+            ctx.result(gson.toJson(isAuthenticated));          
+            return;
+        }
+
+        DataResult result = model.getAllRecipesByUserId(id);
+        LOGGER.info("Result of the request: {}", result.toString());
+        Gson gson = new Gson();
+        ctx.result(gson.toJson(result));
+        LOGGER.info("Sent HTTP response with status code: {} at {}", ctx.status(), LocalDateTime.now());
+        LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
+    }
+    
+    public void favoriteRecipes(io.javalin.http.Context ctx) {
+        LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
+        LOGGER.info("Receiving HTTP POST request on the route: {}", ctx.path());
+        String data = ctx.header("Authorization").replace("Bearer ", "");
+
+        String[] parts = data.split(":");
+        String token = parts[0];
+        String action = parts[1];
+        String id_recipe = parts[2];
+        
+        LOGGER.info("Data: {}", token + "--" + id_recipe);
+
+        DataResult isAuthenticated = model.getUserByToken(token);
+        if (isAuthenticated.getResult().equals("0")) {
+            LOGGER.info("Authenticated: {}", "Usuario no encontrado");
+            Gson gson = new Gson();
+            ctx.result(gson.toJson(isAuthenticated));          
+            return;
+        }
+
+        DataResult result = model.saveFavoriteRecipe(token,id_recipe,action);
+        LOGGER.info("Result of the request: {}", result.toString());
+        Gson gson = new Gson();
+        ctx.result(gson.toJson(result));
+        LOGGER.info("Sent HTTP response with status code: {} at {}", ctx.status(), LocalDateTime.now());
+        LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
+    }
 }

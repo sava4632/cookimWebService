@@ -38,6 +38,8 @@ public interface RecipeDaoInterface {
      * @return List of recipes created by the specified user.
      */
     public List<Recipe> findAllRecipesByUserToken(String token);
+    
+    public List<Recipe> findAllRecipesByUserId(String id);
 
     /**
      * Adds a new recipe to the system.
@@ -63,6 +65,7 @@ public interface RecipeDaoInterface {
      * @return True if the likes were successfully added, false otherwise.
      */
     public boolean likeRecipe(int num, Recipe recipe);
+    
 
     /**
      * Modifies an existing recipe in the system.
@@ -98,5 +101,11 @@ public interface RecipeDaoInterface {
     
     public Recipe findRecipeByUserTokenAndRecipe(String token,Recipe recipe);
     public boolean setRecipePathImage(long id, String pathImage);
+    public int getNumLikes(String id_recipe);
+    public boolean updateLikes(String id_recipe, int numLikes);
+    public boolean addStepsRecipe(Step step);
+    public Step findStepbyStep(Step step);
+    public boolean setStepPathImage(long id_step,String path_image);
+    public boolean linkIngredientToRecipe(Ingredient ingredient,long idRecipe);
 
 }

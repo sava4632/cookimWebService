@@ -47,6 +47,7 @@ public class CookimWebService {
 
         SSLPlugin sslPlugin = new SSLPlugin(conf -> { // creates an instance of the SSLPlugin with the given configuration
             conf.pemFromPath(certPath, keyPath, keyPassword); // sets the certificate and private key file paths and password
+            //conf.pemFromPath("/app/SSL/cert.pem", "/app/SSL/key.pem", "cookimadmin"); // sets the certificate and private key file paths and password
             conf.insecurePort = HTTP_PORT; // sets the insecure (HTTP) port to be used
             conf.host = null; // sets the server host name (null means any)
             conf.insecure = true; // sets insecure (HTTP) connections to be allowed

@@ -58,6 +58,8 @@ public interface UserDaoInterface {
      * database it returns null.
      */
     public User findUserByToken(String token);
+    
+    public User findUserById(String id);
 
     /**
      * Method that assigns/updates a user's token.
@@ -93,5 +95,11 @@ public interface UserDaoInterface {
      * @return true if the path was successfully set, false otherwise.
      */
     public boolean setUserPathPicture(long id, String path);
+    
+    public boolean userLikeRecipe(String token, String id_recipe,int action);
+    
+    public List<Long> getRecipesIdLiked(String token);
+    
+    public boolean favoriteRecipe(long id_user,String id_recipe,String action);
 
 }

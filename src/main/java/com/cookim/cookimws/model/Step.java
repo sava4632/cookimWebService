@@ -9,7 +9,6 @@ import io.javalin.http.UploadedFile;
  */
 public class Step {
 
-    private UploadedFile file;
     private long id;
     private long recipe_id;
     private long step_number;
@@ -17,12 +16,14 @@ public class Step {
     private String path;
 
     //ADD RECIPE CONSTRUCTOR
-    public Step(UploadedFile file, long recipe_id, long step_number, String description) {
-        this.file = file;
+
+    public Step(long id, long recipe_id, long step_number, String description) {
+        this.id = id;
         this.recipe_id = recipe_id;
         this.step_number = step_number;
         this.description = description;
     }
+    
     
     
 
@@ -77,14 +78,6 @@ public class Step {
         this.path = path;
     }
 
-    public UploadedFile getFile() {
-        return file;
-    }
-
-    public void setFile(UploadedFile file) {
-        this.file = file;
-    }
-    
     
 
     @Override

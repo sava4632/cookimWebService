@@ -414,6 +414,33 @@ public class RecipeDao implements RecipeDaoInterface {
         }
         return recipes;
     }
+    
+    @Override
+    public List<Recipe> findAllRecipesByUserId(String id) {
+        List<Recipe> recipes = new ArrayList<>();
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            String query = "SELECT r.* FROM recipe r INNER JOIN user u ON r.id_user = u.id WHERE u.id = ?";
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setString(1, id);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Recipe recipe = new Recipe();
+                recipe.setId(rs.getLong("id"));
+                recipe.setId_user(rs.getLong("id_user"));
+                recipe.setName(rs.getString("name"));
+                recipe.setDescription(rs.getString("description"));
+                recipe.setPath_img(rs.getString("path_img"));
+                recipe.setRating(rs.getInt("rating"));
+                recipe.setLikes(rs.getInt("likes"));
+                recipes.add(recipe);
+            }
+            rs.close();
+            ps.close();
+        } catch (SQLException ex) {
+            System.out.println("Failed to find recipes by user token: " + ex.getMessage());
+        }
+        return recipes;
+    }
 
     @Override
     public Recipe findRecipeByUserTokenAndRecipe(String token, Recipe recipe) {
@@ -462,5 +489,124 @@ public class RecipeDao implements RecipeDaoInterface {
         return result;
     }
 
+    @Override
+    public int getNumLikes(String id_recipe) {
+        int numLikes = 0;
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            String query = "SELECT COUNT(*) AS num_likes FROM user_recipe_likes WHERE id_recipe = ?";
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setString(1, id_recipe);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                numLikes = rs.getInt("num_likes");
+            }
+            rs.close();
+            ps.close();
+        } catch (SQLException ex) {
+            System.out.println("Failed to get number of likes: " + ex.getMessage());
+        }
+        return numLikes;
+    }
+
+    @Override
+    public boolean updateLikes(String id_recipe, int numLikes) {
+        boolean result = false;
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            String query = "UPDATE recipe SET likes = ? WHERE id = ?";
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setInt(1, numLikes);
+            ps.setString(2, id_recipe);
+            int rowsUpdated = ps.executeUpdate();
+            if (rowsUpdated > 0) {
+                result = true;
+            }
+            ps.close();
+        } catch (SQLException ex) {
+            System.out.println("Failed to update number of likes: " + ex.getMessage());
+        }
+        return result;
+    }
+
+    @Override
+    public boolean addStepsRecipe(Step step) {
+        boolean result = false;
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            String query = "INSERT INTO recipe_step (id_recipe, step_number, description) VALUES (?, ?, ?)";
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setLong(1, step.getRecipe_id());
+            ps.setLong(2, step.getStep_number());
+            ps.setString(3, step.getDescription());
+            int rowsInserted = ps.executeUpdate();
+            if (rowsInserted > 0) {
+                result = true;
+            }
+            ps.close();
+        } catch (SQLException ex) {
+            System.out.println("Failed to add step to recipe: " + ex.getMessage());
+        }
+        return result;
+    }
+
+    @Override
+    public Step findStepbyStep(Step step) {
+        Step foundStep = null;
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            String query = "SELECT * FROM recipe_step WHERE id_recipe = ? AND step_number = ? AND description = ?";
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setLong(1, step.getRecipe_id());
+            ps.setLong(2, step.getStep_number());
+            ps.setString(3, step.getDescription());
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                long id = rs.getLong("id");
+                long recipeId = rs.getLong("id_recipe");
+                long stepNumber = rs.getLong("step_number");
+                String description = rs.getString("description");
+                foundStep = new Step(id, recipeId, stepNumber, description);
+            }
+            rs.close();
+            ps.close();
+        } catch (SQLException ex) {
+            System.out.println("Failed to find step by step: " + ex.getMessage());
+        }
+        return foundStep;
+    }
+
+    @Override
+    public boolean setStepPathImage(long id_step, String path_image) {
+        boolean result = false;
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            String query = "UPDATE recipe_step SET path_img = ? WHERE id = ?";
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setString(1, path_image);
+            ps.setLong(2, id_step);
+            int rowsUpdated = ps.executeUpdate();
+            if (rowsUpdated > 0) {
+                result = true;
+            }
+            ps.close();
+        } catch (SQLException ex) {
+            System.out.println("Failed to set step path image: " + ex.getMessage());
+        }
+        return result;
+    }
+
+    @Override
+    public boolean linkIngredientToRecipe(Ingredient ingredient, long idRecipe) {
+        boolean success = false;
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            PreparedStatement ps = conn.prepareStatement("INSERT INTO recipe_ingredients (id_recipe, id_ingredient) VALUES (?, ?)");
+            ps.setLong(1, idRecipe);
+            ps.setLong(2, ingredient.getId());
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0) {
+                success = true;
+            }
+            ps.close();
+        } catch (Exception e) {
+            System.out.println("Failed to link ingredient to recipe: " + e.toString());
+        }
+        return success;
+    }
 
 }

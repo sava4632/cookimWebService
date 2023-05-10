@@ -1,11 +1,14 @@
 package com.cookim.cookimws.model;
 
+import com.cookim.cookimws.CookimWebService;
 import com.cookim.cookimws.utils.DataResult;
 import com.cookim.cookimws.utils.Utils;
 import io.javalin.http.UploadedFile;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+import java.util.Properties;
 import java.util.Random;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -46,6 +49,9 @@ public class Model {
     public DataResult getUserByToken(String token) {
         DataResult result = new DataResult();
         User user = daoUsers.findUserByToken(token);
+        List<Long> userRecipesLiked = daoUsers.getRecipesIdLiked(token);
+        
+        user.setRecipe_likes(userRecipesLiked);
 
         if (user != null) {
             result.setResult("1");
@@ -279,6 +285,31 @@ public class Model {
 
         return result;
     }
+    
+    public DataResult saveFavoriteRecipe(String token, String id_recipe,String action) {
+        DataResult result = new DataResult();
+        User user = daoUsers.findUserByToken(token);
+        Boolean isSaved = daoUsers.favoriteRecipe(user.getId(), id_recipe,action);
+        
+        if(isSaved && action.equals("1")){
+            result.setResult("1");
+            result.setData("Recipe has been saved to favorites successfully");
+        }else if(isSaved && action.equals("0")){
+            result.setResult("1");
+            result.setData("Recipe has been removed to favorites successfully");
+        }else if(!isSaved && action.equals("1")){
+            result.setResult("0");
+            result.setData("Failed to save recipe to favorites");
+        }else if(!isSaved && action.equals("0")){
+            result.setResult("0");
+            result.setData("Failed to remove recipe to favorites");
+        }else{
+            result.setResult("2");
+            result.setData("Error when trying to update favorite recipes");
+        }
+
+        return result;
+    }
 
     
     //--------------------------------------------------RECIPES-------------------------------------------------------------
@@ -298,26 +329,24 @@ public class Model {
         return result;
     }
 
-    public DataResult likeRecipe(int num, String id) {
+    public DataResult likeRecipe(String token, int action, String id_recipe) {
         DataResult result = new DataResult();
+        boolean isLiked = daoUsers.userLikeRecipe(token, id_recipe, action);
 
-        Recipe recipe = daoRecipe.findRecipeById(id);
-
-        if (recipe != null) {
-            System.out.println("Recipe founded");
-            System.out.println("like Intent");
-            Boolean response = daoRecipe.likeRecipe(num, recipe);
-            if (response) {
+        if (isLiked) {
+            int numLikes = daoRecipe.getNumLikes(id_recipe);
+            boolean updated = daoRecipe.updateLikes(id_recipe, numLikes);
+            if (updated) {
+                Recipe recipe = daoRecipe.findRecipeById(id_recipe); // Actualiza el total de likes que le enviará al cliente después de dar like
                 result.setResult("1");
                 result.setData(recipe.getLikes());
             } else {
                 result.setResult("0");
                 result.setData("recipe not updated");
             }
-
         } else {
-            result.setResult("2");
-            result.setData("recipe not found");
+            result.setResult("0");
+            result.setData("recipe not updated");
         }
 
         return result;
@@ -362,8 +391,7 @@ public class Model {
         }
         return result;
     }
-
-    /**
+       /**
      * method that receives the token from the user who wants to add a new
      * recipe, if that token is valid in the database it will take the
      * attributes of the recipe sent by the user and create a new recipe to be
@@ -372,87 +400,70 @@ public class Model {
      * @param recipe the new recipe to add
      * @return 1 if the recipe was added successfully, 0 otherwise
      */
-    public DataResult addNewRecipe(Recipe recipe,String token) {
+    public DataResult addNewRecipe(Recipe recipe, String token,UploadedFile file) {
         DataResult result = new DataResult();
+
         
-//        Recipe r = new Recipe(recipe.getName(),recipe.getDescription(),recipe.getLikes());
-//        boolean added = daoRecipe.addRecipe(token,r);  
-//        Recipe rp = daoRecipe.findRecipeByUserTokenAndRecipe(token,recipe);
-//
-//        
-//
-//        if (added && recipe.getFile() != null) {
-//            //UPLOAD RECIPE IMAGE TO SERVER NGINX
-//            // Save the uploaded file with the unique filename
-//            UploadedFile file = recipe.getFile();
-//            String path = "/var/www/html/resources/recipes/";
-//            String pathRecipe = "/resources/recipes/";
-//            String uniqueFilename = "default.png";
-//            File uploadedFile;
-//            
-//           
-//            if (file != null && file.size() > 0 && file.filename().toLowerCase().endsWith(".jpg")) {
-//                    String randomString = RandomStringUtils.randomAlphanumeric(10);
-//                    String timestamp = Long.toString(System.currentTimeMillis());
-//                    uniqueFilename = randomString + "-" + timestamp + ".jpg";
-//                    uploadedFile = new File(path + uniqueFilename);
-//
-//                    int suffix = 1;
-//                    while (uploadedFile.exists()) {
-//                        uniqueFilename = randomString + "-" + timestamp + "-" + suffix + ".jpg";
-//                        uploadedFile = new File(path + uniqueFilename);
-//                        suffix++;
-//                    }
-//
-//                    try {
-//                        FileUtils.copyInputStreamToFile(file.content(), uploadedFile);
-//                        System.out.println("Saving image" + file.filename() + " as: " + uploadedFile);
-//
-//                        // Update the user with the path to the profile image
-//                        String pathImage = pathRecipe + uniqueFilename;
-//                        boolean updated = daoRecipe.setRecipePathImage(rp.getId(), pathImage);
-//
-//                        if (updated) {
-//                            System.out.println("Recipe image path updated: " + rp.getName());
-//                        } else {
-//                            System.out.println("Failed to update recipe image path: " + rp.getName());
-//                        }
-//                    } catch (IOException ex) {
-//                        System.out.println("Error POST FILE:" + ex.toString());
-//                        result.setResult("0");
-//                        result.setData("Failed when trying to upload the image to server");
-//                        return result;
-//                    }
-//
-//                } else {
-//                    // Update the user with the path to the default profile image
-//                    String pathImage = pathRecipe + uniqueFilename;
-//                    boolean updated = daoUsers.setUserPathPicture(rp.getId(), pathImage);
-//
-//                    if (updated) {
-//                        System.out.println("Recipe image path updated to default image: " + rp.getName());
-//                    } else {
-//                        System.out.println("Failed to update recipe image path to default image: " + rp.getName());
-//                    }
-//                }
-//                //ADD INGREDIENTS TO RECIPE
-//                List<Ingredient> ingredients = recipe.getIngredients();
-//               
-//                //ADD STEPS TO RECIPE
-//                List<Step> steps = recipe.getSteps();
-//                
-//            result.setResult("1");
-//            result.setData("Recipe added successfully");
-//        } else {
-//            if (recipe.getFile() == null) {
-//                System.out.println("El FIlE ES NULO");
-//                System.out.println(recipe.getFile().content().toString());
-//            }
-//            result.setResult("0");
-//            result.setData("Failed when trying to add a new recipe");
-//        }
+        boolean added = daoRecipe.addRecipe(token, recipe);
+        Recipe rp = daoRecipe.findRecipeByUserTokenAndRecipe(token, recipe);
+
+        if (added) {
+            // UPLOAD RECIPE IMAGE TO SERVER NGINX
+            // Save the uploaded file with the unique filename
+            String path = "/var/www/html/resources/recipes/";
+            String pathRecipe = "/resources/recipes/";
+            String uniqueFilename = "default.png";
+            File uploadedFile;
+
+            if (file.size() > 0 ) {
+                String randomString = RandomStringUtils.randomAlphanumeric(10);
+                String timestamp = Long.toString(System.currentTimeMillis());
+                uniqueFilename = randomString + "-" + timestamp + ".jpg";
+                uploadedFile = new File(path + uniqueFilename);
+
+                int suffix = 1;
+                while (uploadedFile.exists()) {
+                    uniqueFilename = randomString + "-" + timestamp + "-" + suffix + ".jpg";
+                    uploadedFile = new File(path + uniqueFilename);
+                    suffix++;
+                }
+
+                try {
+                        FileUtils.copyInputStreamToFile(file.content(), uploadedFile);
+                        System.out.println("Saving image" + file.filename() + " as: " + uploadedFile);
+
+                        // Update the user with the path to the profile image
+                        String pathImage = pathRecipe + uniqueFilename;
+                        boolean updated = daoRecipe.setRecipePathImage(rp.getId(), pathImage);
+
+                        if (updated) {
+                            System.out.println("Recipe image path updated: " + rp.getName());
+                        } else {
+                            System.out.println("Failed to update recipe image path: " + rp.getName());
+                        }
+                    } catch (IOException ex) {
+                        System.out.println("Error POST FILE:" + ex.toString());
+                        result.setResult("0");
+                        result.setData("Failed when trying to upload the image to server");
+                        return result;
+                    }
+
+            } 
+            
+            result.setResult("1");
+            result.setData("Recipe added successfully");
+            result.setRecipeId(rp.getId());
+        } else {
+            result.setResult("0");
+            result.setData("Failed when trying to add a new recipe");
+        }
+
         return result;
     }
+
+
+    
+
 
     /**
      * Method that removes a recipe from the database .
@@ -552,6 +563,114 @@ public class Model {
         }
         return result;
     }
+    
+    public DataResult getAllRecipesByUserId(String id) {
+        DataResult result = new DataResult();
+        User user =  daoUsers.findUserById(id);
+        List<Recipe> recipes = daoRecipe.findAllRecipesByUserId(id);
+        
+        user.setRecipes(recipes);
+        
+        if (user != null) {
+            result.setResult("1");
+            result.setData(user);
+            
+        }else{
+            result.setResult("0");
+            result.setData("Failed when trying to load the entire user profile");
+        }
+        return result;
+    }
+    
+    public DataResult processStepOfRecipe(Step step, UploadedFile stepFile) {
+        DataResult result = new DataResult();
+        boolean isAdded = daoRecipe.addStepsRecipe(step);
+        Step st = daoRecipe.findStepbyStep(step);
+        
+        if ( isAdded && st != null) {
+            result.setResult("1");
+            result.setData("Step added successfully");
+            
+//            Properties props = new Properties(); 
+//            InputStream is = CookimWebService.class.getResourceAsStream("/config.properties");
+//            String path = props.getProperty("server.path");
+//            String pathStep = props.getProperty("db.path");
+//            String uniqueFilename = props.getProperty("step.default");
+//            File uploadedFile;
+
+            String path = "/var/www/html/resources/recipes/recipeSteps/";
+            String pathStep = "/resources/recipes/recipeSteps/";
+            String uniqueFilename = "default.png";
+            File uploadedFile;
+            
+            if (stepFile != null && stepFile.size() > 0) {
+                String randomString = RandomStringUtils.randomAlphanumeric(10);
+                String timestamp = Long.toString(System.currentTimeMillis());
+                uniqueFilename = randomString + "-" + timestamp + ".jpg";
+                uploadedFile = new File(path + uniqueFilename);
+
+                int suffix = 1;
+                while (uploadedFile.exists()) {
+                    uniqueFilename = randomString + "-" + timestamp + "-" + suffix + ".jpg";
+                    uploadedFile = new File(path + uniqueFilename);
+                    suffix++;
+                }
+
+                try {
+                        FileUtils.copyInputStreamToFile(stepFile.content(), uploadedFile);
+                        System.out.println("Saving image" + stepFile.filename() + " as: " + uploadedFile);
+
+                        // Update the user with the path to the profile image
+                        String pathImage = pathStep + uniqueFilename;
+                        boolean updated = daoRecipe.setStepPathImage(st.getId(), pathImage);
+
+                        if (updated) {
+                            System.out.println("Step image path updated: " + st.getId());
+                        } else {
+                            System.out.println("Failed to update step image path: " + st.getId());
+                        }
+                    } catch (IOException ex) {
+                        System.out.println("Error POST FILE:" + ex.toString());
+                        result.setResult("0");
+                        result.setData("Failed when trying to upload the image to server");
+                        return result;
+                    }
+            }else {
+                    // Update the step with the path to the default profile image
+                    String pathImage = pathStep + uniqueFilename;
+                    boolean updated = daoRecipe.setStepPathImage(st.getId(), pathImage);
+
+                    if (updated) {
+                        System.out.println("Step image path updated to default image: " + st.getId());
+                    } else {
+                        System.out.println("Failed to update step image path to default image: " + st.getId());
+                    }
+                } 
+            
+        }else{
+            result.setResult("0");
+            result.setData("Failed to add step");
+        }
+        
+        return result;
+    }
+    
+    public DataResult processIngredientOfRecipe(Ingredient ingredient, long recipeId) {
+        DataResult result = new DataResult();
+        boolean isCreated = daoIngredient.addNewIngredient(ingredient);
+        Ingredient ig = daoIngredient.findIngredientByName(ingredient.getName());
+        boolean isLinked = daoRecipe.linkIngredientToRecipe(ig, recipeId);
+        
+        if(isLinked){
+            result.setResult("1");
+            result.setData("Ingredient linked to the recipe correctly");
+        }else{
+            result.setResult("0");
+            result.setData("The ingredient could not be linked to the recipe");
+        }
+        
+        return result;
+    }
 
     //-------------------------------------CATEGORIES-------------------------------------------------
     //-------------------------------------CATEGORIES-------------------------------------------------
@@ -574,4 +693,12 @@ public class Model {
         }
         return result;
     }
+
+    
+
+    
+
+    
+
+    
 }

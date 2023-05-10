@@ -6,18 +6,25 @@ import com.cookim.cookimws.model.Recipe;
 import com.cookim.cookimws.model.Step;
 import com.cookim.cookimws.utils.DataResult;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.javalin.Javalin;
 import io.javalin.http.UploadedFile;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.logging.Level;
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +52,7 @@ public class RecipeAccessMethods {
             app.post(props.getProperty("remove_recipe"), this::removeRecipe);
             app.post(props.getProperty("modify_recipe"), this::modifyRecipe);
             app.post(props.getProperty("steps"), this::recipeView);
-            app.post(props.getProperty("full_profile"), this::userProfile);
+            
 
             //INGREDIENTS
             app.post(props.getProperty("ingredient_list"), this::getAllIngredients);
@@ -85,73 +92,187 @@ public class RecipeAccessMethods {
         LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
     }
 
-    public void addRecipe(io.javalin.http.Context ctx) {
-        LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
-        LOGGER.info("Receiving HTTP POST request on the route: {}", ctx.path());
-        String token = ctx.header("Authorization").replace("Bearer ", "");
-        DataResult isAuthenticated = model.getUserByToken(token);
 
-        LOGGER.info("Token:{}", token);
-
-        if (isAuthenticated.getResult().equals("0")) {
-            Gson gson = new Gson();
-            ctx.result(gson.toJson(isAuthenticated));
-            LOGGER.info("Sent HTTP response with status code: {} at {}", ctx.status(), LocalDateTime.now());
-            return;
-        }
-
-        Gson gson = new Gson();
-        Recipe recipe = gson.fromJson(ctx.body(), Recipe.class);
-
-        LOGGER.debug("Adding new recipe: {}", recipe.toString());
-        DataResult result = model.addNewRecipe(recipe, token);
-        LOGGER.info("Result of the request: {}", result.toString());
-
-        ctx.result(gson.toJson(result));
-        LOGGER.info("Sent HTTP response with status code: {} at {}", ctx.status(), LocalDateTime.now());
-        LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
-    }
-
-
+    //AÑADE UNA RECETA SIN PASOS NI INGREDIENTES (FUNCIONAL).
 //    public void addRecipe(io.javalin.http.Context ctx) {
 //        LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
 //        LOGGER.info("Receiving HTTP POST request on the route: {}", ctx.path());
 //        String token = ctx.header("Authorization").replace("Bearer ", "");
+//
 //        DataResult isAuthenticated = model.getUserByToken(token);
-//
 //        LOGGER.info("Token:{}", token);
-//
 //        if (isAuthenticated.getResult().equals("0")) {
 //            Gson gson = new Gson();
 //            ctx.result(gson.toJson(isAuthenticated));
-//            LOGGER.info("Sent HTTP response with status code: {} at {}", ctx.status(), LocalDateTime.now());
 //            return;
 //        }
 //
-//        // Extract the recipe object from the form data
 //        Gson gson = new Gson();
-//        Recipe recipe = gson.fromJson(ctx.formParam("recipe"), Recipe.class);
+//        // Retrieve the recipe JSON part from the request
+//        String recipeJson = ctx.formParam("recipe");
+//        Recipe recipe = gson.fromJson(recipeJson, Recipe.class);
 //
-//        // Get the uploaded image file
-//        UploadedFile uploadedFile = ctx.uploadedFile("image");
-//        if (uploadedFile != null) {
-//            try {
-//                Path tempFile = Files.createTempFile("recipe_image_", ".tmp");
-//                Files.copy(uploadedFile.content(), tempFile, StandardCopyOption.REPLACE_EXISTING);
-//                recipe.setFile(tempFile.toFile());
-//            } catch (IOException e) {
-//                LOGGER.error("Error creating temporary file for the recipe image", e);
+//        // Use the uploaded file here
+//        UploadedFile file = ctx.uploadedFile("image");
+//        if (file != null) {
+//            String extension = FilenameUtils.getExtension(file.filename());
+//            List<String> validExtensions = Arrays.asList("jpg", "jpeg", "png");
+//
+//            if (validExtensions.contains(extension.toLowerCase())) {
+//                LOGGER.debug("Adding new recipe with file: {}", file.filename());
+//                // Do something with the file here
+//
+//                LOGGER.debug("Adding new recipe: {}", recipe.toString());
+//                DataResult result = model.addNewRecipe(recipe, token, file);
+//                LOGGER.info("Result of the request: {}", result.toString());
+//
+//                ctx.result(gson.toJson(result));
+//            } else {
+//                LOGGER.debug("Provided file is not an image: {}", file.filename());
+//                DataResult invalidFileResult = new DataResult();
+//                invalidFileResult.setResult("2");
+//                invalidFileResult.setData("Error: Image format not valid");
+//                LOGGER.info("DATA: {}", invalidFileResult.toString());
+//                ctx.result(gson.toJson(invalidFileResult));
 //            }
+//        } else {
+//            LOGGER.debug("Null image has been sent");
+//            // Do something here if no file was uploaded
+//            DataResult noFileResult = new DataResult();
+//            noFileResult.setResult("0");
+//            noFileResult.setData("Error: Null image has been sent");
+//            LOGGER.info("DATA: {}", noFileResult.toString());
+//            ctx.result(gson.toJson(noFileResult));
 //        }
 //
-//        LOGGER.debug("Adding new recipe: {}", recipe.toString());
-//        DataResult result = model.addNewRecipe(recipe, token);
-//        LOGGER.info("Result of the request: {}", result.toString());
-//
-//        ctx.result(gson.toJson(result));
 //        LOGGER.info("Sent HTTP response with status code: {} at {}", ctx.status(), LocalDateTime.now());
 //        LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
 //    }
+
+    public void addRecipe(io.javalin.http.Context ctx) {
+        LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
+        LOGGER.info("Receiving HTTP POST request on the route: {}", ctx.path());
+        String token = ctx.header("Authorization").replace("Bearer ", "");
+
+        DataResult isAuthenticated = model.getUserByToken(token);
+        LOGGER.info("Token:{}", token);
+        if (isAuthenticated.getResult().equals("0")) {
+            Gson gson = new Gson();
+            ctx.result(gson.toJson(isAuthenticated));
+            return;
+        }
+
+        Gson gson = new Gson();
+        // Retrieve the recipe JSON part from the request
+        String recipeJson = ctx.formParam("recipe");
+        Recipe recipe = gson.fromJson(recipeJson, Recipe.class);
+
+        // Use the uploaded file here
+        UploadedFile file = ctx.uploadedFile("image");
+        if (file != null) {
+            String extension = FilenameUtils.getExtension(file.filename());
+            List<String> validExtensions = Arrays.asList("jpg", "jpeg", "png");
+
+            if (validExtensions.contains(extension.toLowerCase())) {
+                LOGGER.debug("Adding new recipe with file: {}", file.filename());
+                // Do something with the file here
+
+                LOGGER.debug("Adding new recipe: {}", recipe.toString());
+               
+                DataResult result = model.addNewRecipe(recipe, token, file);
+                DataResult resultProcessStep = new DataResult();
+                DataResult resultProcessIngredients = new DataResult();
+                
+                long recipeId = result.getRecipeId();
+                // Process each ingredient
+                List<Ingredient> ingredients = recipe.getIngredients();
+                boolean allIngredientsAdded = true;
+                for (Ingredient ingredient : ingredients) {                    
+                    LOGGER.debug("Processing ingredient: {}", ingredient.getName());
+
+                    // Llamar al método en el modelo que maneja el ingrediente
+                    resultProcessIngredients = model.processIngredientOfRecipe(ingredient,recipeId);
+
+                    if (!resultProcessIngredients.getResult().equals("1")) {
+                        allIngredientsAdded = false;
+                    }
+
+                    LOGGER.info("Result of the request Ingredient: {}", resultProcessIngredients.toString());
+                }
+                
+                // Process each step
+                List<Step> steps = recipe.getSteps();
+                boolean allStepsAdded = true;
+                for (Step step : steps) {
+                    step.setRecipe_id(recipeId);
+                    // Retrieve the uploaded file for the step
+                    UploadedFile stepFile = ctx.uploadedFile("step_file_" + step.getStep_number());
+
+                    LOGGER.debug("Processing step number: {}", step.getStep_number());
+                    LOGGER.debug("Step description: {}", step.getDescription());
+
+                    
+                    if (stepFile != null) {
+                        LOGGER.debug("Step file name: {}", stepFile.filename());
+
+                        // Verificar el formato del archivo
+                        if (validExtensions.contains(extension.toLowerCase())) {
+                            // Llamar al método en el modelo que maneja el paso y su imagen correspondiente
+                            resultProcessStep = model.processStepOfRecipe(step, stepFile);
+                            if (!resultProcessStep.getResult().equals("1")) {
+                                allStepsAdded = false;
+                            }
+                        } else {
+                            LOGGER.debug("Invalid file format: {}", stepFile.filename());
+                            // Actualizar el resultado si el formato del archivo no es válido
+                            resultProcessStep.setResult("0");
+                            resultProcessStep.setData("Invalid file format: " + stepFile.filename());
+                            allStepsAdded = false;
+                        }
+                    } else {
+                        // Llamar al método en el modelo sin un archivo adjunto
+                        resultProcessStep = model.processStepOfRecipe(step, null);
+                        if (!resultProcessStep.getResult().equals("1")) {
+                            allStepsAdded = false;
+                        }
+                    }
+
+                    
+                    LOGGER.info("Result of the request Step: {}", resultProcessStep.toString());
+                }
+                
+                 if (result.getResult().equals("1") && allStepsAdded && allIngredientsAdded) {
+                    result.setData("Recipe and all steps added successfully");
+                } else {
+                    result.setResult("2");
+                    result.setData("Error: Failed to add recipe or steps");
+                }
+                
+                LOGGER.info("Result of the request: {}", result.toString());
+
+                ctx.result(gson.toJson(result));
+            } else {
+                LOGGER.debug("Provided file is not an image: {}", file.filename());
+                DataResult invalidFileResult = new DataResult();
+                invalidFileResult.setResult("2");
+                invalidFileResult.setData("Error: Image format not valid");
+                LOGGER.info("DATA: {}", invalidFileResult.toString());
+                ctx.result(gson.toJson(invalidFileResult));
+            }
+        } else {
+            LOGGER.debug("Null image has been sent");
+            // Do something here if no file was uploaded
+            DataResult noFileResult = new DataResult();
+            noFileResult.setResult("0");
+            noFileResult.setData("Error: Null image has been sent");
+            LOGGER.info("DATA: {}", noFileResult.toString());
+            ctx.result(gson.toJson(noFileResult));
+        }
+
+        LOGGER.info("Sent HTTP response with status code: {} at {}", ctx.status(), LocalDateTime.now());
+        LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
+    }
+
 
     public void removeRecipe(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
@@ -237,25 +358,7 @@ public class RecipeAccessMethods {
         LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
     }
 
-    public void userProfile(io.javalin.http.Context ctx) {
-        LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
-        LOGGER.info("Receiving HTTP POST request on the route: {}", ctx.path());
-        String token = ctx.header("Authorization").replace("Bearer ", "");
-
-        DataResult isAuthenticated = model.getUserByToken(token);
-        if (isAuthenticated.getResult().equals("0")) {
-            Gson gson = new Gson();
-            ctx.result(gson.toJson(isAuthenticated));
-            return;
-        }
-
-        DataResult result = model.getAllRecipesByUserToken(token);
-        LOGGER.info("Result of the request: {}", result.toString());
-        Gson gson = new Gson();
-        ctx.result(gson.toJson(result));
-        LOGGER.info("Sent HTTP response with status code: {} at {}", ctx.status(), LocalDateTime.now());
-        LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
-    }
+    
 
     //-------------------------------------INGREDIENTS-------------------------------------------------
     //-------------------------------------INGREDIENTS-------------------------------------------------

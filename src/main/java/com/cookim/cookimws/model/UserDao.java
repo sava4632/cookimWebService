@@ -4,6 +4,7 @@ import com.cookim.cookimws.connection.MariaDBConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -346,5 +347,146 @@ public class UserDao implements UserDaoInterface {
         }
         return result;
     }
+
+    @Override
+    public User findUserById(String id) {
+        User user = null;
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            PreparedStatement ps;
+            ResultSet rs;
+            String query = "SELECT * FROM user WHERE id = ?";
+            ps = conn.prepareStatement(query);
+            ps.setString(1, id);
+            rs = ps.executeQuery();
+
+            // Check if the query result is empty
+            if (!rs.isBeforeFirst()) {
+                System.out.println("User with this token not found in database");
+                return null; // or you can return a special User object indicating that the user was not found
+            }
+
+            if (rs != null && rs.next()) {
+                user = new User();
+                user.setId(rs.getLong("id"));
+                user.setUsername(rs.getString("username"));
+                user.setFull_name(rs.getString("full_name"));
+                user.setEmail(rs.getString("email"));
+                user.setPhone(rs.getString("phone"));
+                user.setPath_img(rs.getString("path_img"));
+                user.setDescription(rs.getString("description"));
+                user.setId_rol(rs.getLong("id_rol"));
+            }
+            ps.close();
+        } catch (Exception e) {
+            System.out.println("failed to find user by token: " + e.toString());
+        }
+        return user;
+    }
+
+    @Override
+    public boolean userLikeRecipe(String token, String id_recipe, int action) {
+        boolean result = false;
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            String query;
+            if (action == 1) {
+                query = "INSERT INTO user_recipe_likes (id_user, id_recipe) "
+                        + "SELECT u.id, r.id FROM user u, recipe r "
+                        + "WHERE u.token = ? AND r.id = ?";
+                // Comprobamos si ya existe un registro en la tabla user_recipe_likes con la misma combinación de id_user e id_recipe
+                PreparedStatement psCheck = conn.prepareStatement("SELECT COUNT(*) FROM user_recipe_likes WHERE id_user = (SELECT id FROM user WHERE token = ?) AND id_recipe = ?");
+                psCheck.setString(1, token);
+                psCheck.setString(2, id_recipe);
+                ResultSet rsCheck = psCheck.executeQuery();
+                rsCheck.next();
+                int count = rsCheck.getInt(1);
+                psCheck.close();
+                if (count == 0) {
+                    // No existe un registro, hacemos la inserción
+                    PreparedStatement psInsert = conn.prepareStatement(query);
+                    psInsert.setString(1, token);
+                    psInsert.setString(2, id_recipe);
+                    int rowsAffected = psInsert.executeUpdate();
+                    psInsert.close();
+                    if (rowsAffected > 0) {
+                        result = true;
+                    }
+                } else {
+                    // Ya existe un registro, no hacemos nada
+                    result = true;
+                }
+            } else if (action == 0) {
+                query = "DELETE FROM user_recipe_likes WHERE id_user = "
+                        + "(SELECT id FROM user WHERE token = ?) "
+                        + "AND id_recipe = ?";
+                PreparedStatement ps = conn.prepareStatement(query);
+                ps.setString(1, token);
+                ps.setString(2, id_recipe);
+                int rowsAffected = ps.executeUpdate();
+                ps.close();
+                if (rowsAffected > 0) {
+                    result = true;
+                }
+            } else {
+                return false; // acción inválida
+            }
+        } catch (Exception e) {
+            System.out.println("Failed to modify like on recipe: " + e.toString());
+        }
+        return result;
+    }
+
+    @Override
+    public List<Long> getRecipesIdLiked(String token) {
+        List<Long> recipeIds = new ArrayList<>();
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            String query = "SELECT id_recipe FROM user_recipe_likes WHERE id_user = "
+                    + "(SELECT id FROM user WHERE token = ?)";
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setString(1, token);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                long recipeId = rs.getLong("id_recipe");
+                recipeIds.add(recipeId);
+            }
+            ps.close();
+        } catch (SQLException ex) {
+            System.out.println("Failed to get recipes liked by user: " + ex.getMessage());
+        }
+        return recipeIds;
+    }
+
+    @Override
+    public boolean favoriteRecipe(long id_user, String id_recipe, String action) {
+        boolean success = false;
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            if (action.equals("1")) {
+                String insertQuery = "INSERT INTO favorite_recipes (user_id, recipe_id) SELECT ?, ? "
+                        + "FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM favorite_recipes WHERE user_id = ? AND recipe_id = ?)";
+                PreparedStatement insertPs = conn.prepareStatement(insertQuery);
+                insertPs.setLong(1, id_user);
+                insertPs.setString(2, id_recipe);
+                insertPs.setLong(3, id_user);
+                insertPs.setString(4, id_recipe);
+                int insertRows = insertPs.executeUpdate();
+                insertPs.close();
+                success = (insertRows > 0);
+            } else if (action.equals("0")) {
+                String deleteQuery = "DELETE FROM favorite_recipes WHERE user_id = ? AND recipe_id = ?";
+                PreparedStatement deletePs = conn.prepareStatement(deleteQuery);
+                deletePs.setLong(1, id_user);
+                deletePs.setString(2, id_recipe);
+                int deleteRows = deletePs.executeUpdate();
+                deletePs.close();
+                success = (deleteRows > 0);
+            }
+        } catch (SQLException ex) {
+            System.out.println("Failed to favorite/unfavorite recipe: " + ex.getMessage());
+        }
+        return success;
+    }
+
+
+
+
 
 }

@@ -1,15 +1,11 @@
 package com.cookim.cookimws.utils;
 
-/**
- *
- * @author cookimadmin
- */
 public class DataResult {
-    public String result;
-    public Object data;
-    
-    
-    public DataResult(){
+    private String result;
+    private Object data;
+    private long recipeId;
+
+    public DataResult() {
         result = "";
         data = "";
     }
@@ -34,9 +30,19 @@ public class DataResult {
         this.data = data;
     }
 
+    public long getRecipeId() {
+        return recipeId;
+    }
+
+    public void setRecipeId(long recipeId) {
+        this.recipeId = recipeId;
+    }
+
     @Override
     public String toString() {
-        return "DataResult{" + "result=" + result + ", data=" + data + '}';
+        return "DataResult{" +
+                "result='" + result + '\'' +
+                ", data=" + data +
+                '}';
     }
-    
 }

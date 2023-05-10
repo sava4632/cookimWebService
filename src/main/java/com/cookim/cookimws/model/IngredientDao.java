@@ -39,6 +39,56 @@ public class IngredientDao implements IngredientDaoInterface{
         return ingredients;
     }
 
+    @Override
+    public boolean addNewIngredient(Ingredient ingredient) {
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            // Check if the ingredient already exists
+            PreparedStatement checkIfExists = conn.prepareStatement("SELECT id FROM ingredients WHERE name = ?");
+            checkIfExists.setString(1, ingredient.getName());
+            ResultSet resultSet = checkIfExists.executeQuery();
+
+            if (resultSet.next()) {
+                // Ingredient already exists, do not add it
+                return false;
+            }
+
+            // Add the new ingredient
+            PreparedStatement addIngredient = conn.prepareStatement("INSERT INTO ingredients (name) VALUES (?)");
+            addIngredient.setString(1, ingredient.getName());
+            addIngredient.executeUpdate();
+
+            addIngredient.close();
+            checkIfExists.close();
+
+            return true;
+        } catch (Exception e) {
+            System.out.println("Failed to add ingredient: " + e.toString());
+            return false;
+        }
+    }
+
+    @Override
+    public Ingredient findIngredientByName(String name) {
+        Ingredient ingredient = null;
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            PreparedStatement ps = conn.prepareStatement("SELECT * FROM ingredients WHERE name = ?");
+            ps.setString(1, name);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                ingredient = new Ingredient();
+                ingredient.setId(rs.getLong("id"));
+                ingredient.setName(rs.getString("name"));
+            }
+            rs.close();
+            ps.close();
+        } catch (Exception e) {
+            System.out.println("Failed to find ingredient by name: " + e.toString());
+        }
+        return ingredient;
+    }
+
+
+
     
     
 }

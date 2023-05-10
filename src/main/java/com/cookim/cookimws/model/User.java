@@ -20,6 +20,24 @@ public class User {
     private String token;
     
     private List<Recipe> recipes;
+    private List<Long> recipe_likes;
+
+    public User(long id, String username, String password, String full_name, String email, String phone, String path_img, String description, long id_rol, String token, List<Recipe> recipes, List<Long> recipe_likes) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+        this.full_name = full_name;
+        this.email = email;
+        this.phone = phone;
+        this.path_img = path_img;
+        this.description = description;
+        this.id_rol = id_rol;
+        this.token = token;
+        this.recipes = recipes;
+        this.recipe_likes = recipe_likes;
+    }
+    
+    
 
     public User(String username, String password, String full_name, String email, String phone, String path_img, String description, String token, List<Recipe> recipes) {
         this.username = username;
@@ -105,6 +123,16 @@ public class User {
 
     public User() {
     }
+
+    public List<Long> getRecipe_likes() {
+        return recipe_likes;
+    }
+
+    public void setRecipe_likes(List<Long> recipe_likes) {
+        this.recipe_likes = recipe_likes;
+    }
+    
+    
 
     public long getId() {
         return id;
