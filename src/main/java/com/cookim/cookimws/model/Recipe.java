@@ -20,6 +20,9 @@ public class Recipe implements Serializable{
     private String user_name;
     private String path; //user image
     
+    private boolean liked;
+    private boolean saved;
+    
     private List<Ingredient> ingredients;
     private List<Step> steps;
     
@@ -87,6 +90,24 @@ public class Recipe implements Serializable{
         this.user_name = user_name;
         this.path = path;
     }
+
+    public boolean isLiked() {
+        return liked;
+    }
+
+    public void setLiked(boolean liked) {
+        this.liked = liked;
+    }
+
+    public boolean isSaved() {
+        return saved;
+    }
+
+    public void setSaved(boolean saved) {
+        this.saved = saved;
+    }
+    
+    
 
     public String getPath() {
         return path;

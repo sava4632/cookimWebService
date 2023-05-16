@@ -48,11 +48,10 @@ public class Model {
     public DataResult getUserByToken(String token) {
         DataResult result = new DataResult();
         User user = daoUsers.findUserByToken(token);
-        List<Long> userRecipesLiked = daoUsers.getRecipesIdLiked(token);
-
-        user.setRecipe_likes(userRecipesLiked);
+        //List<Long> userRecipesLiked = daoUsers.getRecipesIdLiked(token);
 
         if (user != null) {
+            //user.setRecipe_likes(userRecipesLiked);
             result.setResult("1");
             result.setData(user);
         } else {
@@ -467,9 +466,10 @@ public class Model {
      * @return The result of the operation containing the list of recipes with
      * users.
      */
-    public DataResult getAllRecipesWithUser() {
+    public DataResult getAllRecipesWithUser(String token) {
         DataResult result = new DataResult();
 
+        User user = daoUsers.findUserByToken(token);
         // Call the appropriate method in the DAO to retrieve recipes with users
         List<Recipe> recipes = daoRecipe.findAllRecipesWithUser();
 
@@ -477,6 +477,17 @@ public class Model {
             result.setResult("2");
             result.setData("Empty recipe list");
         } else if (recipes != null) {
+            
+            for (Recipe recipe : recipes) {
+                //Comprueba si le ha dado like a la receta
+                boolean isLiked = daoRecipe.existsUserRecipeLiked(user.getId(),recipe.getId());
+                recipe.setLiked(isLiked);
+                
+                //comprueba si tiene la receta como favorita
+                boolean isSaved = daoRecipe.existsUserRecipeSaved(user.getId(), recipe.getId());
+                recipe.setSaved(isSaved);
+            }
+            
             result.setResult("1");
             result.setData(recipes);
         } else {
@@ -565,64 +576,65 @@ public class Model {
     public DataResult deleteRecipe(String token, String id_recipe) {
         DataResult result = new DataResult();
         Utils utils = new Utils();
-        
+
         User user = daoUsers.findUserByToken(token);
         Recipe recipe = daoRecipe.findRecipeById(id_recipe);
+        System.out.println("Recipe: " + recipe.toString());
         List<Step> steps = daoRecipe.findAllStepsByRecipe(id_recipe);
-        
-        //Delete user likes from recipe
-        boolean isDeletedLikes = daoRecipe.deleteLikesFromRecipe(recipe.getId());
-        // Eliminar ingredientes de la receta
-        boolean isRemovedIngredients = daoIngredient.deleteIngredientsToRecipe(recipe.getId());
-        //Delete user recipes saved
-        boolean isRemovedRecipesSaved = daoRecipe.deleteRecipesSaved(recipe.getId());
 
-        // Eliminar archivos de imagen de cada paso
-        if (!steps.isEmpty()) {
-            for (Step step : steps) {
-                String pathImg = "/var/www/html" + step.getPath();
-                System.out.println("Eliminando la imagen del paso: " + pathImg);
-                if (pathImg != null) {
-                    // Eliminar archivo del servidor utilizando la ruta
-                    utils.deleteFileFromServer(pathImg);
+        if (recipe != null) {
+            // Remove steps of the recipe
+            boolean isRemovedSteps = daoRecipe.deleteStepsByRecipe(recipe.getId());
+            if (isRemovedSteps) {
+                System.out.println("Se han eliminado los pasos de la receta");
+            } else {
+                System.out.println("No se han podido eliminar los pasos de la receta");
+                result.setResult("0");
+                result.setData("Failed when trying to remove steps");
+                return result;
+            }
+
+            // Remove image files for each step
+            if (!steps.isEmpty()) {
+                for (Step step : steps) {
+                    String pathImg = "/var/www/html" + step.getPath();
+                    System.out.println("Removing step image: " + pathImg);
+                    if (pathImg != null && !pathImg.equals("/var/www/html/resources/recipes/recipeSteps/default.jpg")) {
+                        // Delete file from the server using the path
+                        utils.deleteFileFromServer(pathImg);
+                    }
                 }
             }
-        }
-        
 
-        // Eliminar pasos de la receta si se eliminaron todos los archivos de imagen
-        if (!steps.isEmpty()) {
-            if (utils.areAllStepImagesRemoved(steps)) {
-                boolean isRemovedSteps = daoRecipe.deleteStepsByRecipe(recipe.getId());
-                if (!isRemovedSteps) {
-                    result.setResult("0");
-                    result.setData("Failed when trying to remove steps");
-                    return result;
+            // Remove the recipe from the database
+            boolean isRemovedRecipe = daoRecipe.deleteRecipe(user.getId(), id_recipe);
+
+            // If the recipe and all steps were removed successfully, delete the recipe image
+            if (isRemovedRecipe && utils.areAllStepImagesRemoved(steps)) {
+                String recipeImg = "/var/www/html" + recipe.getPath_img();
+                System.out.println("Removing recipe image: " + recipeImg);
+                if (recipeImg != null && !recipeImg.equals("/var/www/html/resources/recipes/default.jpg")) {
+                    // Delete recipe image from the server using the path
+                    utils.deleteFileFromServer(recipeImg);
                 }
             }
-        }
-        // Eliminar la receta de la base de datos
-        boolean isRemovedRecipe = daoRecipe.deleteRecipe(user.getId(), id_recipe);
 
-        // Si la receta y todos los pasos se eliminaron correctamente, eliminar la imagen de la receta
-        if (isRemovedRecipe && isRemovedIngredients && utils.areAllStepImagesRemoved(steps)) {
-            String recipeImg = "/var/www/html"+recipe.getPath_img();
-            System.out.println("Eliminando la imagen de la receta: " + recipeImg);
-            if (recipeImg != null) {
-                // Eliminar imagen de la receta del servidor utilizando la ruta
-                utils.deleteFileFromServer(recipeImg);
+            if (isRemovedRecipe) {
+                result.setResult("1");
+                result.setData("Recipe removed successfully");
+            } else {
+                result.setResult("0");
+                result.setData("Failed when trying to remove recipe");
             }
-        }
-
-        if (isRemovedRecipe) {
-            result.setResult("1");
-            result.setData("Recipe removed successfully");
         } else {
-            result.setResult("0");
-            result.setData("Failed when trying to remove recipe");
+            result.setResult("3");
+            result.setData("No se ha encontrado una receta con ese id");
         }
+
         return result;
     }
+
+
 
     /**
      * Method to modify an already existing line in the database.

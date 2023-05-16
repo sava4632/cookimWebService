@@ -37,7 +37,7 @@ public class RecipeAccessMethods {
             Properties props = new Properties();
             props.load(getClass().getResourceAsStream("/configEndpoints.properties"));
 
-            app.get(props.getProperty("home_page"), this::homePage);
+            app.post(props.getProperty("home_page"), this::homePage);
             app.post(props.getProperty("home_page_preferences"), this::homePagePreferences);
             app.post(props.getProperty("add_recipe"), this::addRecipe);
             app.post(props.getProperty("remove_recipe"), this::removeRecipe);
@@ -66,10 +66,20 @@ public class RecipeAccessMethods {
      */
     public void homePage(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
-        LOGGER.info("Receiving HTTP GET request on the route: {}", ctx.path());
+        LOGGER.info("Receiving HTTP POST request on the route: {}", ctx.path());
+        String token = ctx.header("Authorization").replace("Bearer ", "");
+        
+        LOGGER.info("Data obtained:{}", token);
+        
+        DataResult isAuthenticated = model.getUserByToken(token);
+        if (isAuthenticated.getResult().equals("0")) {
+            Gson gson = new Gson();
+            ctx.result(gson.toJson(isAuthenticated));
+            return;
+        }
 
         // Retrieve all recipes with user information for the home page
-        DataResult result = model.getAllRecipesWithUser();
+        DataResult result = model.getAllRecipesWithUser(token);
         LOGGER.info("Result of the request: {}", result.toString());
         Gson gson = new Gson();
         ctx.result(gson.toJson(result));

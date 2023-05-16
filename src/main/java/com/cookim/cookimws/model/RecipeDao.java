@@ -123,7 +123,6 @@ public class RecipeDao implements RecipeDaoInterface {
         return result;
     }
 
-
     /**
      *
      * Increments or decrements the number of likes of a recipe in the database.
@@ -234,7 +233,6 @@ public class RecipeDao implements RecipeDaoInterface {
     }
 
     /**
-     *
      * This method retrieves a list of recipes and their corresponding user
      * names from the database by joining the recipe and user tables.
      *
@@ -249,10 +247,10 @@ public class RecipeDao implements RecipeDaoInterface {
             ResultSet rs;
             String query = "SELECT recipe.id, recipe.id_user, recipe.name, recipe.description, "
                     + "recipe.path_img, recipe.rating, recipe.likes, user.username "
-                    + "FROM recipe JOIN user ON recipe.id_user = user.id;";
+                    + "FROM recipe JOIN user ON recipe.id_user = user.id "
+                    + "ORDER BY recipe.id DESC;"; // Modifying the query to retrieve recipes in descending order
             ps = conn.prepareStatement(query);
             rs = ps.executeQuery();
-
             while (rs.next()) {
                 Recipe recipe = new Recipe();
                 recipe.setId(rs.getLong("id"));
@@ -420,6 +418,14 @@ public class RecipeDao implements RecipeDaoInterface {
         return recipes;
     }
 
+    /**
+     *
+     * Retrieves a list of all recipes associated with a specific user
+     * identified by their ID.
+     *
+     * @param id The ID of the user to retrieve the recipes for.
+     * @return A list of all the recipes associated with the specified user.
+     */
     @Override
     public List<Recipe> findAllRecipesByUserId(String id) {
         List<Recipe> recipes = new ArrayList<>();
@@ -447,6 +453,17 @@ public class RecipeDao implements RecipeDaoInterface {
         return recipes;
     }
 
+    /**
+     *
+     * Retrieves a recipe associated with a specific user token and recipe
+     * details.
+     *
+     * @param token The token of the user.
+     * @param recipe The recipe object containing the name and description of
+     * the recipe to search for.
+     * @return The recipe associated with the user token and recipe details, or
+     * null if not found.
+     */
     @Override
     public Recipe findRecipeByUserTokenAndRecipe(String token, Recipe recipe) {
         Recipe result = null;
@@ -475,6 +492,14 @@ public class RecipeDao implements RecipeDaoInterface {
         return result;
     }
 
+    /**
+     *
+     * Sets the path image for a recipe identified by its ID.
+     *
+     * @param id The ID of the recipe to set the path image for.
+     * @param pathImage The new path image to set.
+     * @return True if the path image was successfully set, false otherwise.
+     */
     @Override
     public boolean setRecipePathImage(long id, String pathImage) {
         boolean result = false;
@@ -494,6 +519,13 @@ public class RecipeDao implements RecipeDaoInterface {
         return result;
     }
 
+    /**
+     *
+     * Retrieves the number of likes for a recipe identified by its ID.
+     *
+     * @param id_recipe The ID of the recipe to get the number of likes for.
+     * @return The number of likes for the specified recipe.
+     */
     @Override
     public int getNumLikes(String id_recipe) {
         int numLikes = 0;
@@ -513,6 +545,15 @@ public class RecipeDao implements RecipeDaoInterface {
         return numLikes;
     }
 
+    /**
+     *
+     * Updates the number of likes for a recipe identified by its ID.
+     *
+     * @param id_recipe The ID of the recipe to update the number of likes for.
+     * @param numLikes The new number of likes to set.
+     * @return True if the number of likes was successfully updated, false
+     * otherwise.
+     */
     @Override
     public boolean updateLikes(String id_recipe, int numLikes) {
         boolean result = false;
@@ -532,6 +573,14 @@ public class RecipeDao implements RecipeDaoInterface {
         return result;
     }
 
+    /**
+     *
+     * Adds a step to a recipe.
+     *
+     * @param step The step object containing the details of the step to add.
+     * @return True if the step was successfully added to the recipe, false
+     * otherwise.
+     */
     @Override
     public boolean addStepsRecipe(Step step) {
         boolean result = false;
@@ -552,6 +601,13 @@ public class RecipeDao implements RecipeDaoInterface {
         return result;
     }
 
+    /**
+     *
+     * Finds a step by its details (recipe ID, step number, and description).
+     *
+     * @param step The step object containing the details of the step to find.
+     * @return The found step, or null if not found.
+     */
     @Override
     public Step findStepbyStep(Step step) {
         Step foundStep = null;
@@ -577,6 +633,14 @@ public class RecipeDao implements RecipeDaoInterface {
         return foundStep;
     }
 
+    /**
+     *
+     * Sets the path image for a step identified by its ID.
+     *
+     * @param id_step The ID of the step to set the path image for.
+     * @param path_image The new path image to set.
+     * @return True if the path image was successfully set, false otherwise.
+     */
     @Override
     public boolean setStepPathImage(long id_step, String path_image) {
         boolean result = false;
@@ -596,6 +660,15 @@ public class RecipeDao implements RecipeDaoInterface {
         return result;
     }
 
+    /**
+     *
+     * Links an ingredient to a recipe.
+     *
+     * @param ingredient The ingredient object to link to the recipe.
+     * @param idRecipe The ID of the recipe to link the ingredient to.
+     * @return True if the ingredient was successfully linked to the recipe,
+     * false otherwise.
+     */
     @Override
     public boolean linkIngredientToRecipe(Ingredient ingredient, long idRecipe) {
         boolean success = false;
@@ -614,6 +687,13 @@ public class RecipeDao implements RecipeDaoInterface {
         return success;
     }
 
+    /**
+     *
+     * Searches for recipes that contain a specified text in their name.
+     *
+     * @param text The text to search for in recipe names.
+     * @return A list of recipes that match the search criteria.
+     */
     @Override
     public List<Recipe> searchRecipesLikeText(String text) {
         List<Recipe> recipes = new ArrayList<>();
@@ -641,6 +721,14 @@ public class RecipeDao implements RecipeDaoInterface {
         return recipes;
     }
 
+    /**
+     *
+     * Adds a new comment to the system.
+     *
+     * @param comment The comment object containing the details of the comment
+     * to add.
+     * @return True if the comment was successfully added, false otherwise.
+     */
     @Override
     public boolean addNewComment(Comment comment) {
         try (Connection conn = MariaDBConnection.getConnection()) {
@@ -664,6 +752,15 @@ public class RecipeDao implements RecipeDaoInterface {
         }
     }
 
+    /**
+     *
+     * Retrieves a list of all the parent comments for a specific recipe
+     * identified by its ID.
+     *
+     * @param id_recipe The ID of the recipe to retrieve the parent comments
+     * for.
+     * @return A list of parent comments for the specified recipe.
+     */
     @Override
     public List<Comment> findAllParentCommentByRecipeId(String id_recipe) {
         List<Comment> comments = new ArrayList<>();
@@ -697,6 +794,13 @@ public class RecipeDao implements RecipeDaoInterface {
         return comments;
     }
 
+    /**
+     *
+     * Deletes all steps associated with a recipe.
+     *
+     * @param id_recipe The ID of the recipe to delete the steps for.
+     * @return True if the steps were successfully deleted, false otherwise.
+     */
     @Override
     public boolean deleteStepsByRecipe(long id_recipe) {
         try (Connection conn = MariaDBConnection.getConnection()) {
@@ -712,6 +816,13 @@ public class RecipeDao implements RecipeDaoInterface {
         }
     }
 
+    /**
+     *
+     * Deletes all likes from a recipe.
+     *
+     * @param id_recipe The ID of the recipe to delete the likes from.
+     * @return True if the likes were successfully deleted, false otherwise.
+     */
     @Override
     public boolean deleteLikesFromRecipe(long id_recipe) {
         try (Connection conn = MariaDBConnection.getConnection()) {
@@ -727,6 +838,14 @@ public class RecipeDao implements RecipeDaoInterface {
         }
     }
 
+    /**
+     *
+     * Deletes all saved recipes associated with a recipe.
+     *
+     * @param id_recipe The ID of the recipe to delete the saved recipes for.
+     * @return True if the saved recipes were successfully deleted, false
+     * otherwise.
+     */
     @Override
     public boolean deleteRecipesSaved(long id_recipe) {
         try (Connection conn = MariaDBConnection.getConnection()) {
@@ -740,8 +859,66 @@ public class RecipeDao implements RecipeDaoInterface {
             System.out.println("Failed to delete saved recipes: " + e.toString());
             return false;
         }
-}
+    }
 
+    /**
+     *
+     * Checks if a user has liked a specific recipe.
+     *
+     * @param id_user The ID of the user.
+     * @param id_recipe The ID of the recipe.
+     * @return True if the user has liked the recipe, false otherwise.
+     */
+    @Override
+    public boolean existsUserRecipeLiked(long id_user, long id_recipe) {
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM user_recipe_likes WHERE id_user = ? AND id_recipe = ?");
+            ps.setLong(1, id_user);
+            ps.setLong(2, id_recipe);
+            ResultSet rs = ps.executeQuery();
 
+            if (rs.next()) {
+                int count = rs.getInt(1);
+                return count > 0;
+            }
+
+            rs.close();
+            ps.close();
+        } catch (Exception e) {
+            System.out.println("Failed to check if user recipe liked: " + e.toString());
+        }
+
+        return false;
+    }
+
+    /**
+     *
+     * Checks if a user has saved a specific recipe.
+     *
+     * @param user_id The ID of the user.
+     * @param recipe_id The ID of the recipe.
+     * @return True if the user has saved the recipe, false otherwise.
+     */
+    @Override
+    public boolean existsUserRecipeSaved(long user_id, long recipe_id) {
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM favorite_recipes WHERE user_id = ? AND recipe_id = ?");
+            ps.setLong(1, user_id);
+            ps.setLong(2, recipe_id);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                int count = rs.getInt(1);
+                return count > 0;
+            }
+
+            rs.close();
+            ps.close();
+        } catch (Exception e) {
+            System.out.println("Failed to check if user recipe saved: " + e.toString());
+        }
+
+        return false;
+    }
 
 }

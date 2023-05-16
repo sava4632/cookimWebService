@@ -348,6 +348,13 @@ public class UserDao implements UserDaoInterface {
         return result;
     }
 
+    /**
+     *
+     * Finds a user by their ID.
+     *
+     * @param id The ID of the user.
+     * @return The user object if found, null otherwise.
+     */
     @Override
     public User findUserById(String id) {
         User user = null;
@@ -383,6 +390,16 @@ public class UserDao implements UserDaoInterface {
         return user;
     }
 
+    /**
+     *
+     * Updates the user's like status for a recipe.
+     *
+     * @param token The user's token.
+     * @param id_recipe The ID of the recipe.
+     * @param action The action to perform: 1 for liking, 0 for unliking.
+     * @return True if the like status was updated successfully, false
+     * otherwise.
+     */
     @Override
     public boolean userLikeRecipe(String token, String id_recipe, int action) {
         boolean result = false;
@@ -435,6 +452,13 @@ public class UserDao implements UserDaoInterface {
         return result;
     }
 
+    /**
+     *
+     * Retrieves the IDs of recipes liked by a user.
+     *
+     * @param token The user's token.
+     * @return A list of recipe IDs liked by the user.
+     */
     @Override
     public List<Long> getRecipesIdLiked(String token) {
         List<Long> recipeIds = new ArrayList<>();
@@ -455,6 +479,15 @@ public class UserDao implements UserDaoInterface {
         return recipeIds;
     }
 
+    /**
+     *
+     * Favorites or unfavorites a recipe for a user.
+     *
+     * @param id_user The ID of the user.
+     * @param id_recipe The ID of the recipe.
+     * @param action The action to perform: "1" to favorite, "0" to unfavorite.
+     * @return True if the operation is successful, false otherwise.
+     */
     @Override
     public boolean favoriteRecipe(long id_user, String id_recipe, String action) {
         boolean success = false;
@@ -485,6 +518,15 @@ public class UserDao implements UserDaoInterface {
         return success;
     }
 
+    /**
+     *
+     * Manages the follow relationship between users.
+     *
+     * @param id_follower The ID of the follower user.
+     * @param id_followed The ID of the user being followed.
+     * @param action The action to perform: "1" to follow, "0" to unfollow.
+     * @return True if the operation is successful, false otherwise.
+     */
     @Override
     public boolean manageUserFollow(long id_follower, String id_followed, String action) {
         boolean success = false;
@@ -515,6 +557,14 @@ public class UserDao implements UserDaoInterface {
         return success;
     }
 
+    /**
+     *
+     * Checks if a user follows another user.
+     *
+     * @param user_id The ID of the user.
+     * @param other_user_id The ID of the other user.
+     * @return True if the user follows the other user, false otherwise.
+     */
     @Override
     public boolean checkFollow(long user_id, String other_user_id) {
         boolean exists = false;
@@ -535,6 +585,13 @@ public class UserDao implements UserDaoInterface {
         return exists;
     }
 
+    /**
+     *
+     * Retrieves a list of favorite recipes for a given user.
+     *
+     * @param id_user The ID of the user.
+     * @return A list of favorite recipes.
+     */
     @Override
     public List<Recipe> getFavoriteRecipes(long id_user) {
         List<Recipe> favoriteRecipes = new ArrayList<>();
@@ -568,6 +625,5 @@ public class UserDao implements UserDaoInterface {
 
         return favoriteRecipes;
     }
-
 
 }

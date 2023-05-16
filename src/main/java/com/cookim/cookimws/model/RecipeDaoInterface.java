@@ -38,7 +38,7 @@ public interface RecipeDaoInterface {
      * @return List of recipes created by the specified user.
      */
     public List<Recipe> findAllRecipesByUserToken(String token);
-    
+
     public List<Recipe> findAllRecipesByUserId(String id);
 
     /**
@@ -47,7 +47,7 @@ public interface RecipeDaoInterface {
      * @param recipe Recipe object to be added.
      * @return True if the recipe was successfully added, false otherwise.
      */
-    public boolean addRecipe(String token,Recipe recipe);
+    public boolean addRecipe(String token, Recipe recipe);
 
     /**
      * Deletes a recipe from the system.
@@ -55,7 +55,7 @@ public interface RecipeDaoInterface {
      * @param id ID of the recipe to be deleted.
      * @return True if the recipe was successfully deleted, false otherwise.
      */
-    public boolean deleteRecipe(long id_user,String id_recipe);
+    public boolean deleteRecipe(long id_user, String id_recipe);
 
     /**
      * Adds a "like" to a given recipe.
@@ -65,7 +65,6 @@ public interface RecipeDaoInterface {
      * @return True if the likes were successfully added, false otherwise.
      */
     public boolean likeRecipe(int num, Recipe recipe);
-    
 
     /**
      * Modifies an existing recipe in the system.
@@ -98,7 +97,7 @@ public interface RecipeDaoInterface {
      * @return List of all steps for the specified recipe.
      */
     public List<Step> findAllStepsByRecipe(String id);
-    
+
     public Recipe findRecipeByUserTokenAndRecipe(String token, Recipe recipe);
     // This method finds a recipe based on the user token and the recipe object provided.
 
@@ -129,12 +128,66 @@ public interface RecipeDaoInterface {
     public boolean addNewComment(Comment comment);
     // This method adds a new comment to a recipe.
 
+    /**
+     *
+     * Retrieves a list of all the parent comments for a specific recipe
+     * identified by its ID.
+     *
+     * @param id_recipe The ID of the recipe to retrieve the parent comments
+     * for.
+     * @return A list of parent comments associated with the specified recipe.
+     */
     public List<Comment> findAllParentCommentByRecipeId(String id_recipe);
-    // This method retrieves a list of all the parent comments for a specific recipe identified by its ID.
-    
+
+    /**
+     *
+     * Deletes all the steps associated with a recipe identified by its ID.
+     *
+     * @param id_recipe The ID of the recipe to delete the steps from.
+     * @return True if the steps were successfully deleted, false otherwise.
+     */
     public boolean deleteStepsByRecipe(long id_recipe);
-    
+
+    /**
+     *
+     * Deletes all the likes associated with a recipe identified by its ID.
+     *
+     * @param id_recipe The ID of the recipe to delete the likes from.
+     * @return True if the likes were successfully deleted, false otherwise.
+     */
     public boolean deleteLikesFromRecipe(long id_recipe);
-    
+
+
+    /**
+     *
+     * Deletes all the saved recipes associated with a recipe identified by its
+     * ID.
+     *
+     * @param id_recipe The ID of the recipe to delete the saved recipes from.
+     * @return True if the saved recipes were successfully deleted, false
+     * otherwise.
+     */
     public boolean deleteRecipesSaved(long id_recipe);
+
+
+    /**
+     *
+     * Checks if a user has liked a specific recipe.
+     *
+     * @param id_user The ID of the user to check.
+     * @param id_recipe The ID of the recipe to check if the user has liked.
+     * @return True if the user has liked the recipe, false otherwise.
+     */
+    public boolean existsUserRecipeLiked(long id_user, long id_recipe);
+
+    /**
+     *
+     * Checks if a user has saved a specific recipe.
+     *
+     * @param id_user The ID of the user to check.
+     * @param id_recipe The ID of the recipe to check if the user has saved.
+     * @return True if the user has saved the recipe, false otherwise.
+     */
+    public boolean existsUserRecipeSaved(long id_user, long id_recipe);
+    
 }
