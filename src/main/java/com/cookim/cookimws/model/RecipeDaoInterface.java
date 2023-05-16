@@ -55,7 +55,7 @@ public interface RecipeDaoInterface {
      * @param id ID of the recipe to be deleted.
      * @return True if the recipe was successfully deleted, false otherwise.
      */
-    public boolean deleteRecipe(String id);
+    public boolean deleteRecipe(long id_user,String id_recipe);
 
     /**
      * Adds a "like" to a given recipe.
@@ -99,13 +99,42 @@ public interface RecipeDaoInterface {
      */
     public List<Step> findAllStepsByRecipe(String id);
     
-    public Recipe findRecipeByUserTokenAndRecipe(String token,Recipe recipe);
-    public boolean setRecipePathImage(long id, String pathImage);
-    public int getNumLikes(String id_recipe);
-    public boolean updateLikes(String id_recipe, int numLikes);
-    public boolean addStepsRecipe(Step step);
-    public Step findStepbyStep(Step step);
-    public boolean setStepPathImage(long id_step,String path_image);
-    public boolean linkIngredientToRecipe(Ingredient ingredient,long idRecipe);
+    public Recipe findRecipeByUserTokenAndRecipe(String token, Recipe recipe);
+    // This method finds a recipe based on the user token and the recipe object provided.
 
+    public boolean setRecipePathImage(long id, String pathImage);
+    // This method sets the path of the image associated with a recipe identified by its ID.
+
+    public int getNumLikes(String id_recipe);
+    // This method retrieves the number of likes for a specific recipe identified by its ID.
+
+    public boolean updateLikes(String id_recipe, int numLikes);
+    // This method updates the number of likes for a specific recipe identified by its ID.
+
+    public boolean addStepsRecipe(Step step);
+    // This method adds a new step to a recipe.
+
+    public Step findStepbyStep(Step step);
+    // This method finds a step by its corresponding step object.
+
+    public boolean setStepPathImage(long id_step, String path_image);
+    // This method sets the path of the image associated with a step identified by its ID.
+
+    public boolean linkIngredientToRecipe(Ingredient ingredient, long idRecipe);
+    // This method links an ingredient to a recipe, identified by the ingredient and the recipe ID.
+
+    public List<Recipe> searchRecipesLikeText(String text);
+    // This method searches for recipes that contain the provided text in their title or description.
+
+    public boolean addNewComment(Comment comment);
+    // This method adds a new comment to a recipe.
+
+    public List<Comment> findAllParentCommentByRecipeId(String id_recipe);
+    // This method retrieves a list of all the parent comments for a specific recipe identified by its ID.
+    
+    public boolean deleteStepsByRecipe(long id_recipe);
+    
+    public boolean deleteLikesFromRecipe(long id_recipe);
+    
+    public boolean deleteRecipesSaved(long id_recipe);
 }

@@ -485,8 +485,89 @@ public class UserDao implements UserDaoInterface {
         return success;
     }
 
+    @Override
+    public boolean manageUserFollow(long id_follower, String id_followed, String action) {
+        boolean success = false;
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            if (action.equals("1")) {
+                String insertQuery = "INSERT INTO user_followeds (follower_id, followed_id) SELECT ?, ? "
+                        + "FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM user_followeds WHERE follower_id = ? AND followed_id = ?)";
+                PreparedStatement insertPs = conn.prepareStatement(insertQuery);
+                insertPs.setLong(1, id_follower);
+                insertPs.setString(2, id_followed);
+                insertPs.setLong(3, id_follower);
+                insertPs.setString(4, id_followed);
+                int insertRows = insertPs.executeUpdate();
+                insertPs.close();
+                success = (insertRows > 0);
+            } else if (action.equals("0")) {
+                String deleteQuery = "DELETE FROM user_followeds WHERE follower_id = ? AND followed_id = ?";
+                PreparedStatement deletePs = conn.prepareStatement(deleteQuery);
+                deletePs.setLong(1, id_follower);
+                deletePs.setString(2, id_followed);
+                int deleteRows = deletePs.executeUpdate();
+                deletePs.close();
+                success = (deleteRows > 0);
+            }
+        } catch (SQLException ex) {
+            System.out.println("Failed to manage user follow: " + ex.getMessage());
+        }
+        return success;
+    }
 
+    @Override
+    public boolean checkFollow(long user_id, String other_user_id) {
+        boolean exists = false;
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            String query = "SELECT COUNT(*) FROM user_followeds WHERE follower_id = ? AND followed_id = ?";
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setLong(1, user_id);
+            ps.setString(2, other_user_id);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                int count = rs.getInt(1);
+                exists = (count > 0);
+            }
+            ps.close();
+        } catch (SQLException ex) {
+            System.out.println("Failed to check follow: " + ex.getMessage());
+        }
+        return exists;
+    }
 
+    @Override
+    public List<Recipe> getFavoriteRecipes(long id_user) {
+        List<Recipe> favoriteRecipes = new ArrayList<>();
+
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            PreparedStatement ps = conn.prepareStatement("SELECT r.id, r.id_user, r.name, r.description, r.path_img, r.rating, r.likes "
+                    + "FROM recipe r "
+                    + "INNER JOIN favorite_recipes fr ON r.id = fr.recipe_id "
+                    + "WHERE fr.user_id = ?");
+            ps.setLong(1, id_user);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Recipe recipe = new Recipe();
+                recipe.setId(rs.getLong("id"));
+                recipe.setId_user(rs.getLong("id_user"));
+                recipe.setName(rs.getString("name"));
+                recipe.setDescription(rs.getString("description"));
+                recipe.setPath_img(rs.getString("path_img"));
+                recipe.setRating(rs.getInt("rating"));
+                recipe.setLikes(rs.getInt("likes"));
+
+                favoriteRecipes.add(recipe);
+            }
+
+            rs.close();
+            ps.close();
+        } catch (Exception e) {
+            System.out.println("Failed to get favorite recipes: " + e.toString());
+        }
+
+        return favoriteRecipes;
+    }
 
 
 }

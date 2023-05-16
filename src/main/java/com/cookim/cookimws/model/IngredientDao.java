@@ -18,6 +18,12 @@ public class IngredientDao implements IngredientDaoInterface{
         result = new ArrayList<>();
     }
 
+    /**
+
+Retrieves a list of ingredients with an ID greater than the specified maximum ID.
+@param idmax the maximum ID value to compare against
+@return a list of Ingredient objects matching the criteria
+*/
     @Override
     public List<Ingredient> getAllIngredientsWithIdMax(String idmax) {
         List<Ingredient> ingredients = new ArrayList<>();
@@ -85,6 +91,21 @@ public class IngredientDao implements IngredientDaoInterface{
             System.out.println("Failed to find ingredient by name: " + e.toString());
         }
         return ingredient;
+    }
+
+    @Override
+    public boolean deleteIngredientsToRecipe(long id_recipe) {
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            PreparedStatement ps = conn.prepareStatement("DELETE FROM recipe_ingredients WHERE id_recipe = ?");
+            ps.setLong(1, id_recipe);
+            int rowsAffected = ps.executeUpdate();
+            ps.close();
+
+            return rowsAffected > 0;
+        } catch (Exception e) {
+            System.out.println("Failed to delete ingredients for recipe: " + e.toString());
+            return false;
+        }
     }
 
 

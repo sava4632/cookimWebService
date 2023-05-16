@@ -18,7 +18,7 @@ public class Recipe implements Serializable{
     private double rating;
     private int likes;
     private String user_name;
-    private String path;
+    private String path; //user image
     
     private List<Ingredient> ingredients;
     private List<Step> steps;

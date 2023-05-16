@@ -1,9 +1,12 @@
 package com.cookim.cookimws.utils;
 
+import com.cookim.cookimws.model.Step;
+import java.io.File;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -64,6 +67,48 @@ public class Utils {
         } catch (NoSuchAlgorithmException e) {
             System.out.println("Error al generar hash MD5: " + e.getMessage());
             return null;
+        }
+    }
+    
+    /**
+     * Método auxiliar que verifica si todos los archivos de imagen de los pasos
+     * han sido eliminados.
+     *
+     * @param steps la lista de pasos de la receta
+     * @return true si todos los archivos de imagen han sido eliminados, false
+     * en caso contrario
+     */
+    public boolean areAllStepImagesRemoved(List<Step> steps) {
+        for (Step step : steps) {
+            String pathImg = "/var/www/html"+step.getPath();
+            if (pathImg != null && isFileExists(pathImg)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    
+    /**
+     * Método auxiliar para verificar si un archivo existe en el servidor.
+     *
+     * @param filePath la ruta del archivo
+     * @return true si el archivo existe, false en caso contrario
+     */
+    public boolean isFileExists(String filePath) {
+        File file = new File(filePath);
+        return file.exists();
+    }
+
+    /**
+     * Método auxiliar para eliminar un archivo del servidor.
+     *
+     * @param filePath la ruta del archivo a eliminar
+     */
+    public void deleteFileFromServer(String filePath) {
+        File file = new File(filePath);
+        if (file.exists()) {
+            file.delete();
         }
     }
 }

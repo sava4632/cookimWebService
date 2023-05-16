@@ -6,6 +6,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -92,21 +94,23 @@ public class RecipeDao implements RecipeDaoInterface {
         }
         return result;
     }
+
     /**
-     *
      * Deletes a recipe from the database.
      *
-     * @param id the ID of the recipe to delete
+     * @param id_user the ID of the user who owns the recipe
+     * @param id_recipe the ID of the recipe to delete
      * @return true if the recipe was successfully deleted, false otherwise
      */
     @Override
-    public boolean deleteRecipe(String id) {
+    public boolean deleteRecipe(long id_user, String id_recipe) {
         boolean result = false;
         try (Connection conn = MariaDBConnection.getConnection()) {
             PreparedStatement ps;
-            String query = "DELETE FROM recipe WHERE id = ?";
+            String query = "DELETE FROM recipe WHERE id = ? AND id_user = ?";
             ps = conn.prepareStatement(query);
-            ps.setString(1, id);
+            ps.setString(1, id_recipe);
+            ps.setLong(2, id_user);
 
             int rowsDeleted = ps.executeUpdate();
             if (rowsDeleted > 0) {
@@ -118,6 +122,7 @@ public class RecipeDao implements RecipeDaoInterface {
         }
         return result;
     }
+
 
     /**
      *
@@ -414,7 +419,7 @@ public class RecipeDao implements RecipeDaoInterface {
         }
         return recipes;
     }
-    
+
     @Override
     public List<Recipe> findAllRecipesByUserId(String id) {
         List<Recipe> recipes = new ArrayList<>();
@@ -608,5 +613,135 @@ public class RecipeDao implements RecipeDaoInterface {
         }
         return success;
     }
+
+    @Override
+    public List<Recipe> searchRecipesLikeText(String text) {
+        List<Recipe> recipes = new ArrayList<>();
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            String query = "SELECT * FROM recipe WHERE name LIKE ?";
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setString(1, "%" + text + "%");
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                long id = rs.getLong("id");
+                long id_user = rs.getLong("id_user");
+                String name = rs.getString("name");
+                String description = rs.getString("description");
+                String path_img = rs.getString("path_img");
+                float rating = rs.getFloat("rating");
+                int likes = rs.getInt("likes");
+
+                Recipe recipe = new Recipe(id, id_user, name, description, path_img, rating, likes);
+                recipes.add(recipe);
+            }
+            ps.close();
+        } catch (SQLException ex) {
+            System.out.println("Failed to search recipes: " + ex.getMessage());
+        }
+        return recipes;
+    }
+
+    @Override
+    public boolean addNewComment(Comment comment) {
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            String query = "INSERT INTO comment (id_user, id_recipe, text, data_send, id_parent_comment) VALUES (?, ?, ?, ?, ?)";
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setLong(1, comment.getId_user());
+            ps.setLong(2, comment.getId_recipe());
+            ps.setString(3, comment.getText());
+            ps.setTimestamp(4, new Timestamp(comment.getData_send().getTime()));
+            if (comment.getId_parent_comment() != null) {
+                ps.setLong(5, comment.getId_parent_comment());
+            } else {
+                ps.setNull(5, Types.INTEGER);
+            }
+            int rowsAffected = ps.executeUpdate();
+            ps.close();
+            return rowsAffected > 0;
+        } catch (SQLException ex) {
+            System.out.println("Failed to add comment: " + ex.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public List<Comment> findAllParentCommentByRecipeId(String id_recipe) {
+        List<Comment> comments = new ArrayList<>();
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            String query = "SELECT c.id, c.id_user, c.text, c.data_send, c.id_parent_comment, u.username, u.path_img "
+                    + "FROM comment c INNER JOIN user u ON c.id_user = u.id "
+                    + "WHERE c.id_recipe = ? AND c.id_parent_comment IS NULL";
+            PreparedStatement ps = conn.prepareStatement(query);
+            long recipeId = Long.parseLong(id_recipe);
+            ps.setLong(1, recipeId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                long id = rs.getLong("id");
+                long id_user = rs.getLong("id_user");
+                String commentText = rs.getString("text");
+                Timestamp timestamp = rs.getTimestamp("data_send");
+                Long id_parent_comment = rs.getLong("id_parent_comment");
+                String username = rs.getString("username");
+                String path_img = rs.getString("path_img");
+
+                Comment comment = new Comment(id, id_user, recipeId, commentText, timestamp, id_parent_comment, username, path_img);
+
+                comments.add(comment);
+            }
+            ps.close();
+        } catch (SQLException ex) {
+            System.out.println("Failed to find parent comments by recipe ID: " + ex.getMessage());
+        } catch (NumberFormatException ex) {
+            System.out.println("Invalid recipe ID format: " + ex.getMessage());
+        }
+        return comments;
+    }
+
+    @Override
+    public boolean deleteStepsByRecipe(long id_recipe) {
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            PreparedStatement ps = conn.prepareStatement("DELETE FROM recipe_step WHERE id_recipe = ?");
+            ps.setLong(1, id_recipe);
+            int rowsAffected = ps.executeUpdate();
+            ps.close();
+
+            return rowsAffected > 0;
+        } catch (Exception e) {
+            System.out.println("Failed to delete steps for recipe: " + e.toString());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean deleteLikesFromRecipe(long id_recipe) {
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            PreparedStatement ps = conn.prepareStatement("DELETE FROM user_recipe_likes WHERE id_recipe = ?");
+            ps.setLong(1, id_recipe);
+            int rowsAffected = ps.executeUpdate();
+            ps.close();
+
+            return rowsAffected > 0;
+        } catch (Exception e) {
+            System.out.println("Failed to delete likes from recipe: " + e.toString());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean deleteRecipesSaved(long id_recipe) {
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            PreparedStatement ps = conn.prepareStatement("DELETE FROM favorite_recipes WHERE recipe_id = ?");
+            ps.setLong(1, id_recipe);
+            int rowsAffected = ps.executeUpdate();
+            ps.close();
+
+            return rowsAffected > 0;
+        } catch (Exception e) {
+            System.out.println("Failed to delete saved recipes: " + e.toString());
+            return false;
+        }
+}
+
+
 
 }

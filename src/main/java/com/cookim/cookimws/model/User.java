@@ -21,6 +21,7 @@ public class User {
     
     private List<Recipe> recipes;
     private List<Long> recipe_likes;
+    private boolean follow;
 
     public User(long id, String username, String password, String full_name, String email, String phone, String path_img, String description, long id_rol, String token, List<Recipe> recipes, List<Long> recipe_likes) {
         this.id = id;
@@ -222,10 +223,22 @@ public class User {
         this.recipes = recipes;
     }
 
+    public boolean isFollow() {
+        return follow;
+    }
+
+    public void setFollow(boolean follow) {
+        this.follow = follow;
+    }
+
     @Override
     public String toString() {
-        return "User{" + "id=" + id + ", username=" + username + ", password=" + password + ", full_name=" + full_name + ", email=" + email + ", phone=" + phone + ", path_img=" + path_img + ", description=" + description + ", id_rol=" + id_rol + ", token=" + token + ", recipes=" + recipes + '}';
+        return "User{" + "id=" + id + ", username=" + username + ", password=" + password + ", full_name=" + full_name + ", email=" + email + ", phone=" + phone + ", path_img=" + path_img + ", description=" + description + ", id_rol=" + id_rol + ", token=" + token + ", recipes=" + recipes + ", recipe_likes=" + recipe_likes + ", follow=" + follow + '}';
     }
+    
+    
+
+    
     
     
 }

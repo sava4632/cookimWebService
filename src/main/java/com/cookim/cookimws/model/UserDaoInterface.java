@@ -58,7 +58,7 @@ public interface UserDaoInterface {
      * database it returns null.
      */
     public User findUserByToken(String token);
-    
+
     public User findUserById(String id);
 
     /**
@@ -95,11 +95,23 @@ public interface UserDaoInterface {
      * @return true if the path was successfully set, false otherwise.
      */
     public boolean setUserPathPicture(long id, String path);
-    
-    public boolean userLikeRecipe(String token, String id_recipe,int action);
-    
+
+    public boolean userLikeRecipe(String token, String id_recipe, int action);
+    // This method allows a user to like or unlike a recipe based on the provided user token, recipe ID, and action.
+
     public List<Long> getRecipesIdLiked(String token);
-    
-    public boolean favoriteRecipe(long id_user,String id_recipe,String action);
+    // This method retrieves a list of recipe IDs that the user has liked based on the provided user token.
+
+    public boolean favoriteRecipe(long id_user, String id_recipe, String action);
+    // This method allows a user to favorite or unfavorite a recipe identified by the user ID, recipe ID, and action.
+
+    public boolean manageUserFollow(long id_follower, String id_followed, String action);
+    // This method manages the follow relationship between two users, identified by the follower ID, followed ID, and action.
+
+    public boolean checkFollow(long user_id, String other_user_id);
+    // This method checks if a user with the specified ID follows another user identified by the other user's ID.
+
+    public List<Recipe> getFavoriteRecipes(long id_user);
+    // This method retrieves a list of favorite recipes for a specific user identified by their user ID.
 
 }
