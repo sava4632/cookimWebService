@@ -114,28 +114,45 @@ public class UserAccessMethods {
     public void modifyUser(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
         LOGGER.info("Receiving HTTP POST request on the route: {}", ctx.path());
+        
+        // Extract credentials from the authorization header
+        String data = ctx.header("Authorization").replace("Bearer ", "");
 
-        // Retrieve the parameters from the form data
-        String username = ctx.formParam("username");
-        String password = ctx.formParam("password");
-        String full_name = ctx.formParam("full_name");
-        String email = ctx.formParam("email");
-        String phone = ctx.formParam("phone");
-        String path_img = ctx.formParam("path_img");
-        String description = ctx.formParam("description");
-        String id_rolStr = ctx.formParam("id_rol");
+        String[] parts = data.split(":");
+        String token = parts[0];
+        String username = parts[1];
+        String full_name = parts[2];
+        String email = parts[3];
+        String phone = parts[4];
 
-        // Convert id_rol to a long
-        long id_rol = Long.parseLong(id_rolStr);
 
-        // Retrieve the token from the form data
-        String token = ctx.formParam("token");
+        // Get the uploaded image file
+        UploadedFile file = ctx.uploadedFile("img");
+        
+         // Log the received data
+        LOGGER.info("Received data: {}", data);
+        
+        // Check if the user is authenticated
+        DataResult isAuthenticated = model.getUserByToken(token);
+        if (isAuthenticated.getResult().equals("0")) {
+            // If the user is not authenticated, return the authentication result
+            Gson gson = new Gson();
+            ctx.result(gson.toJson(isAuthenticated));
+            return;
+        }
+
 
         // Create a new User object with the provided information
-        User user = new User(username, password, full_name, email, phone, path_img, description, id_rol, token);
+        User user = new User(username, full_name, email, phone,token);
 
         // Modify the user's information in the model
-        DataResult result = model.modifyUser(user);
+        DataResult result = new DataResult();
+        if(file != null && file.size() > 0){
+            result = model.modifyUser(user,file);
+        }else{
+            result = model.modifyUser(user,null);
+        }
+         
         LOGGER.info("Result of the request: {}", result.toString());
 
         // Convert the result to JSON using Gson and set it as the response

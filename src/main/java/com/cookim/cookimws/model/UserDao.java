@@ -86,18 +86,14 @@ public class UserDao implements UserDaoInterface {
     public boolean modifyUser(User user) {
         try (Connection conn = MariaDBConnection.getConnection()) {
             PreparedStatement ps;
-            String query = "UPDATE user SET username=?, password=?, full_name=?, email=?, phone=?, path_img=?, description=?, id_rol=?, token=? WHERE token=?";
+            String query = "UPDATE user SET username=?, full_name=?, email=?, phone=?, path_img=? WHERE token=?";
             ps = conn.prepareStatement(query);
             ps.setString(1, user.getUsername());
-            ps.setString(2, user.getPassword());
-            ps.setString(3, user.getFull_name());
-            ps.setString(4, user.getEmail());
-            ps.setString(5, user.getPhone());
-            ps.setString(6, user.getPath_img());
-            ps.setString(7, user.getDescription());
-            ps.setLong(8, user.getId_rol());
-            ps.setString(9, user.getToken());
-            ps.setString(10, user.getToken());
+            ps.setString(2, user.getFull_name());
+            ps.setString(3, user.getEmail());
+            ps.setString(4, user.getPhone());
+            ps.setString(5, user.getPath_img());
+            ps.setString(6, user.getToken());
 
             int rowsUpdated = ps.executeUpdate();
             ps.close();

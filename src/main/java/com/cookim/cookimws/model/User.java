@@ -22,6 +22,17 @@ public class User {
     private List<Recipe> recipes;
     private List<Long> recipe_likes;
     private boolean follow;
+    
+    
+
+    public User(String username, String full_name, String email, String phone,String token) {//Modify user constructor
+        this.username = username;
+        this.full_name = full_name;
+        this.email = email;
+        this.phone = phone;
+        this.token = token;
+    }
+    
 
     public User(long id, String username, String password, String full_name, String email, String phone, String path_img, String description, long id_rol, String token, List<Recipe> recipes, List<Long> recipe_likes) {
         this.id = id;

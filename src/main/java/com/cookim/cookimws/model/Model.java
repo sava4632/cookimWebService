@@ -6,10 +6,13 @@ import com.cookim.cookimws.utils.Utils;
 import io.javalin.http.UploadedFile;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
+import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 
 /**
@@ -118,22 +121,105 @@ public class Model {
      * @param user The user object containing the modified user information.
      * @return The result of the operation.
      */
-    public DataResult modifyUser(User user) {
+    public DataResult modifyUser(User user, UploadedFile file) {
         DataResult result = new DataResult();
 
-        // Call the appropriate method in the DAO to modify the user
-        boolean modified = daoUsers.modifyUser(user);
+        //get full user
+        System.out.println("Usuario modificado: " + user.toString());
+        User u = daoUsers.findUserByToken(user.getToken());
 
-        if (modified) {
+        String currentImagePath = u.getPath_img(); //imagen actual del usuario
+
+        // Check if the file format is valid
+        if (file != null) {
+            String extension = FilenameUtils.getExtension(file.filename());
+            List<String> validExtensions = Arrays.asList("jpg", "jpeg", "png");
+
+            if (!validExtensions.contains(extension.toLowerCase())) {
+                result.setResult("2");
+                result.setData("Error: Image format not valid");
+                return result;
+            }
+        }
+
+        // Call the appropriate method in the DAO to modify the user
+        boolean isModified = daoUsers.modifyUser(user);
+        if (isModified) {
             result.setResult("1");
             result.setData("User modified successfully");
+
+            // Save the uploaded file with a unique filename
+            String path = "/var/www/html/resources/users/";
+            String pathUsers = "/resources/users/";
+            String uniqueFilename = "default.png";
+            File uploadedFile;
+
+            if (file != null) {
+                String randomString = RandomStringUtils.randomAlphanumeric(10);
+                String timestamp = Long.toString(System.currentTimeMillis());
+                uniqueFilename = randomString + "-" + timestamp + file.extension();
+                uploadedFile = new File(path + uniqueFilename);
+
+                int suffix = 1;
+                while (uploadedFile.exists()) {
+                    uniqueFilename = randomString + "-" + timestamp + "-" + suffix + file.extension();
+                    uploadedFile = new File(path + uniqueFilename);
+                    suffix++;
+                }
+
+                try {
+                    FileUtils.copyInputStreamToFile(file.content(), uploadedFile);
+                    System.out.println("Saving image" + file.filename() + " as: " + uploadedFile);
+
+                    if (uploadedFile.exists()) {
+                        // El archivo se ha subido correctamente al servidor
+                        String pathImage = pathUsers + uniqueFilename;
+                        boolean updated = daoUsers.setUserPathPicture(u.getId(), pathImage);
+
+                        if (updated) {
+                            System.out.println("User image path updated: " + u.getUsername());
+                        } else {
+                            System.out.println("Failed to update user image path: " + u.getUsername());
+                        }
+
+                        // Eliminar la antigua imagen del servidor si el usuario se actualizo y la imagen se subio al servidor
+                        Utils utils = new Utils();
+                        if (utils.isFileExists("/var/www/html" + currentImagePath) && updated) {
+                            System.out.println("Eliminado la imagen antigua del usuario " + "/var/www/html" + currentImagePath);
+                            utils.deleteFileFromServer("/var/www/html" + currentImagePath);
+                        } else {
+                            System.out.println("No se encontro la imagen antigua: " + "/var/www/html" + currentImagePath);
+                        }
+                    } else {
+                        // El archivo no se ha subido correctamente al servidor
+                        result.setResult("3");
+                        result.setData("Failed when trying to upload the image to the server");
+                        return result;
+                    }
+                } catch (IOException ex) {
+                    System.out.println("Error POST FILE:" + ex.toString());
+                    result.setResult("3");
+                    result.setData("Failed when trying to upload the image to the server");
+                    return result;
+                }
+            } else {
+                // Se deja la imagen anterior que el usuario tenía como foto de perfil
+                String pathImage = currentImagePath;
+                boolean updated = daoUsers.setUserPathPicture(u.getId(), pathImage);
+
+                if (updated) {
+                    System.out.println("User image path updated: " + u.getUsername());
+                } else {
+                    System.out.println("Failed to update user image path: " + u.getUsername());
+                }
+            }
         } else {
             result.setResult("0");
             result.setData("Error when trying to modify the user");
         }
-
         return result;
     }
+
 
     /**
      * Adds a new user with the provided user object and uploaded file.
@@ -365,6 +451,12 @@ public class Model {
         List<Recipe> recipes = daoUsers.getFavoriteRecipes(user.getId());
 
         if (!recipes.isEmpty()) {
+            for (Recipe recipe : recipes) {
+                //Comprueba si le ha dado like a la receta
+                boolean isLiked = daoRecipe.existsUserRecipeLiked(user.getId(),recipe.getId());
+                recipe.setLiked(isLiked);
+            }
+            
             result.setResult("1");
             result.setData(recipes);
         } else {
@@ -573,64 +665,71 @@ public class Model {
      * @param id the id of the recipe to delete
      * @return 1 if the recipe was added successfully, 0 otherwise
      */
+    /**
+     * Method that removes a recipe from the database .
+     *
+     * @param id the id of the recipe to delete
+     * @return 1 if the recipe was added successfully, 0 otherwise
+     */
     public DataResult deleteRecipe(String token, String id_recipe) {
         DataResult result = new DataResult();
         Utils utils = new Utils();
-
+        
         User user = daoUsers.findUserByToken(token);
         Recipe recipe = daoRecipe.findRecipeById(id_recipe);
-        System.out.println("Recipe: " + recipe.toString());
         List<Step> steps = daoRecipe.findAllStepsByRecipe(id_recipe);
+        
+        //Delete user likes from recipe
+        boolean isDeletedLikes = daoRecipe.deleteLikesFromRecipe(recipe.getId());
+        // Eliminar ingredientes de la receta
+        boolean isRemovedIngredients = daoIngredient.deleteIngredientsToRecipe(recipe.getId());
+        //Delete user recipes saved
+        boolean isRemovedRecipesSaved = daoRecipe.deleteRecipesSaved(recipe.getId());
 
-        if (recipe != null) {
-            // Remove steps of the recipe
-            boolean isRemovedSteps = daoRecipe.deleteStepsByRecipe(recipe.getId());
-            if (isRemovedSteps) {
-                System.out.println("Se han eliminado los pasos de la receta");
-            } else {
-                System.out.println("No se han podido eliminar los pasos de la receta");
-                result.setResult("0");
-                result.setData("Failed when trying to remove steps");
-                return result;
-            }
-
-            // Remove image files for each step
-            if (!steps.isEmpty()) {
-                for (Step step : steps) {
-                    String pathImg = "/var/www/html" + step.getPath();
-                    System.out.println("Removing step image: " + pathImg);
-                    if (pathImg != null && !pathImg.equals("/var/www/html/resources/recipes/recipeSteps/default.jpg")) {
-                        // Delete file from the server using the path
-                        utils.deleteFileFromServer(pathImg);
-                    }
+        // Eliminar archivos de imagen de cada paso
+        if (!steps.isEmpty()) {
+            for (Step step : steps) {
+                String pathImg = "/var/www/html" + step.getPath();
+                System.out.println("Eliminando la imagen del paso: " + pathImg);
+                if (pathImg != null) {
+                    // Eliminar archivo del servidor utilizando la ruta
+                    utils.deleteFileFromServer(pathImg);
                 }
             }
+        }
+        
 
-            // Remove the recipe from the database
-            boolean isRemovedRecipe = daoRecipe.deleteRecipe(user.getId(), id_recipe);
-
-            // If the recipe and all steps were removed successfully, delete the recipe image
-            if (isRemovedRecipe && utils.areAllStepImagesRemoved(steps)) {
-                String recipeImg = "/var/www/html" + recipe.getPath_img();
-                System.out.println("Removing recipe image: " + recipeImg);
-                if (recipeImg != null && !recipeImg.equals("/var/www/html/resources/recipes/default.jpg")) {
-                    // Delete recipe image from the server using the path
-                    utils.deleteFileFromServer(recipeImg);
+        // Eliminar pasos de la receta si se eliminaron todos los archivos de imagen
+        if (!steps.isEmpty()) {
+            if (utils.areAllStepImagesRemoved(steps)) {
+                boolean isRemovedSteps = daoRecipe.deleteStepsByRecipe(recipe.getId());
+                if (!isRemovedSteps) {
+                    result.setResult("0");
+                    result.setData("Failed when trying to remove steps");
+                    return result;
                 }
             }
+        }
+        // Eliminar la receta de la base de datos
+        boolean isRemovedRecipe = daoRecipe.deleteRecipe(user.getId(), id_recipe);
 
-            if (isRemovedRecipe) {
-                result.setResult("1");
-                result.setData("Recipe removed successfully");
-            } else {
-                result.setResult("0");
-                result.setData("Failed when trying to remove recipe");
+        // Si la receta y todos los pasos se eliminaron correctamente, eliminar la imagen de la receta
+        if (isRemovedRecipe && utils.areAllStepImagesRemoved(steps)) {
+            String recipeImg = "/var/www/html" + recipe.getPath_img();
+            System.out.println("Removing recipe image: " + recipeImg);
+            if (recipeImg != null && !recipeImg.equals("/var/www/html/resources/recipes/default.jpg")) {
+                // Delete recipe image from the server using the path
+                utils.deleteFileFromServer(recipeImg);
             }
-        } else {
-            result.setResult("3");
-            result.setData("No se ha encontrado una receta con ese id");
         }
 
+        if (isRemovedRecipe) {
+            result.setResult("1");
+            result.setData("Recipe removed successfully");
+        } else {
+            result.setResult("0");
+            result.setData("Failed when trying to remove recipe");
+        }
         return result;
     }
 
