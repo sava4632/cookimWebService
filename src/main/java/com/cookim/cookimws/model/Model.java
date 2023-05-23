@@ -6,6 +6,7 @@ import com.cookim.cookimws.utils.Utils;
 import io.javalin.http.UploadedFile;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -466,6 +467,42 @@ public class Model {
 
         return result;
     }
+    
+    public DataResult modifyUserPassword(String token, String oldPassword, String newPassword) {
+        DataResult result = new DataResult();
+        User user = daoUsers.findUserByToken(token);
+        System.out.println("User: " + user.toString());
+        try {
+            if (!oldPassword.equals(user.getPassword())) {
+                result.setResult("2");
+                result.setData("Incorrect current password");
+                return result;
+            }
+            
+            if(newPassword.equals(user.getPassword())){
+                result.setResult("3");
+                result.setData("The new password cannot be the same as the old one");
+                return result;
+            }
+
+            boolean isModified = daoUsers.modifyUserPassword(user.getId(), newPassword);
+
+            if (isModified) {
+                result.setResult("1");
+                result.setData("Password modified successfully");
+            } else {
+                result.setResult("0");
+                result.setData("Failed to modify the user's password: " + user.getUsername());
+            }
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+            result.setResult("0");
+            result.setData("Error occurred while trying to modify the user's password: " + user.getUsername());
+        }
+
+        return result;
+    }
+
 
     //--------------------------------------------------RECIPES-------------------------------------------------------------
     //--------------------------------------------------RECIPES-------------------------------------------------------------
@@ -671,23 +708,115 @@ public class Model {
      * @param id the id of the recipe to delete
      * @return 1 if the recipe was added successfully, 0 otherwise
      */
+//    public DataResult deleteRecipe(String token, String id_recipe) {
+//        DataResult result = new DataResult();
+//        Utils utils = new Utils();
+//        
+//        User user = daoUsers.findUserByToken(token);
+//        Recipe recipe = daoRecipe.findRecipeById(id_recipe);
+//        List<Step> steps = daoRecipe.findAllStepsByRecipe(id_recipe);
+//        
+//        //Delete user likes from recipe
+//        boolean isDeletedLikes = daoRecipe.deleteLikesFromRecipe(recipe.getId());
+//        // Eliminar ingredientes de la receta
+//        boolean isRemovedIngredients = daoIngredient.deleteIngredientsToRecipe(recipe.getId());
+//        //Delete user recipes saved
+//        boolean isRemovedRecipesSaved = daoRecipe.deleteRecipesSaved(recipe.getId());
+//        //Remove categories
+//        boolean isREmovedCategories = daoRecipe.deleteCategoriesToRecipe(recipe.getId());
+//
+//        // Eliminar archivos de imagen de cada paso
+//        if (!steps.isEmpty()) {
+//            for (Step step : steps) {
+//                String pathImg = "/var/www/html" + step.getPath();
+//                System.out.println("Eliminando la imagen del paso: " + pathImg);
+//                if (pathImg != null) {
+//                    // Eliminar archivo del servidor utilizando la ruta
+//                    utils.deleteFileFromServer(pathImg);
+//                }
+//            }
+//        }
+//        
+//
+//        // Eliminar pasos de la receta si se eliminaron todos los archivos de imagen
+//        if (!steps.isEmpty()) {
+//            if (utils.areAllStepImagesRemoved(steps)) {
+//                boolean isRemovedSteps = daoRecipe.deleteStepsByRecipe(recipe.getId());
+//                if (!isRemovedSteps) {
+//                    result.setResult("0");
+//                    result.setData("Failed when trying to remove steps");
+//                    return result;
+//                }
+//            }
+//        }
+//        // Eliminar la receta de la base de datos
+//        boolean isRemovedRecipe = daoRecipe.deleteRecipe(user.getId(), id_recipe);
+//
+//        // Si la receta y todos los pasos se eliminaron correctamente, eliminar la imagen de la receta
+//        if (isRemovedRecipe && utils.areAllStepImagesRemoved(steps)) {
+//            String recipeImg = "/var/www/html" + recipe.getPath_img();
+//            System.out.println("Removing recipe image: " + recipeImg);
+//            if (recipeImg != null && !recipeImg.equals("/var/www/html/resources/recipes/default.jpg")) {
+//                // Delete recipe image from the server using the path
+//                utils.deleteFileFromServer(recipeImg);
+//            }
+//        }
+//
+//        if (isRemovedRecipe) {
+//            result.setResult("1");
+//            result.setData("Recipe removed successfully");
+//        } else {
+//            result.setResult("0");
+//            result.setData("Failed when trying to remove recipe");
+//        }
+//        return result;
+//    }
+    
     public DataResult deleteRecipe(String token, String id_recipe) {
         DataResult result = new DataResult();
         Utils utils = new Utils();
-        
+
         User user = daoUsers.findUserByToken(token);
         Recipe recipe = daoRecipe.findRecipeById(id_recipe);
-        List<Step> steps = daoRecipe.findAllStepsByRecipe(id_recipe);
         
-        //Delete user likes from recipe
+        System.out.println("Recipe to remove: " + recipe.toString());
+        
+        if (recipe == null) {
+            result.setResult("0");
+            result.setData("Recipe not found");
+            return result;
+        }
+        
+        List<Step> steps = daoRecipe.findAllStepsByRecipe(id_recipe);
+
+        List<String> failedElements = new ArrayList<>();
+
+        // Delete user likes from recipe
         boolean isDeletedLikes = daoRecipe.deleteLikesFromRecipe(recipe.getId());
+        if (!isDeletedLikes) {
+            failedElements.add("Likes");
+        }
+
         // Eliminar ingredientes de la receta
         boolean isRemovedIngredients = daoIngredient.deleteIngredientsToRecipe(recipe.getId());
-        //Delete user recipes saved
+        if (!isRemovedIngredients) {
+            failedElements.add("Ingredients");
+        }
+
+        // Delete user recipes saved
         boolean isRemovedRecipesSaved = daoRecipe.deleteRecipesSaved(recipe.getId());
+        if (!isRemovedRecipesSaved) {
+            failedElements.add("Recipes Saved");
+        }
+
+        // Remove categories
+        boolean isRemovedCategories = daoRecipe.deleteCategoriesToRecipe(recipe.getId());
+        if (!isRemovedCategories) {
+            failedElements.add("Categories");
+        }
 
         // Eliminar archivos de imagen de cada paso
-        if (!steps.isEmpty()) {
+        if (isDeletedLikes && isRemovedCategories  && isRemovedIngredients && isRemovedRecipesSaved) {
             for (Step step : steps) {
                 String pathImg = "/var/www/html" + step.getPath();
                 System.out.println("Eliminando la imagen del paso: " + pathImg);
@@ -697,41 +826,56 @@ public class Model {
                 }
             }
         }
-        
 
         // Eliminar pasos de la receta si se eliminaron todos los archivos de imagen
         if (!steps.isEmpty()) {
             if (utils.areAllStepImagesRemoved(steps)) {
                 boolean isRemovedSteps = daoRecipe.deleteStepsByRecipe(recipe.getId());
                 if (!isRemovedSteps) {
-                    result.setResult("0");
-                    result.setData("Failed when trying to remove steps");
-                    return result;
+                    failedElements.add("Steps");
                 }
             }
         }
-        // Eliminar la receta de la base de datos
-        boolean isRemovedRecipe = daoRecipe.deleteRecipe(user.getId(), id_recipe);
-
-        // Si la receta y todos los pasos se eliminaron correctamente, eliminar la imagen de la receta
-        if (isRemovedRecipe && utils.areAllStepImagesRemoved(steps)) {
-            String recipeImg = "/var/www/html" + recipe.getPath_img();
-            System.out.println("Removing recipe image: " + recipeImg);
-            if (recipeImg != null && !recipeImg.equals("/var/www/html/resources/recipes/default.jpg")) {
-                // Delete recipe image from the server using the path
-                utils.deleteFileFromServer(recipeImg);
+        
+        if (!failedElements.isEmpty()) {
+            for (int i = 0; i < failedElements.size(); i++) {
+                Object element = failedElements.get(i);
+                System.out.println("Ejecución Incompleta " + (i + 1) + ": " + element);
             }
         }
 
-        if (isRemovedRecipe) {
-            result.setResult("1");
-            result.setData("Recipe removed successfully");
+        
+
+        // Verificar si todos los elementos se eliminaron correctamente
+        if (failedElements.isEmpty()) {
+            // Eliminar la receta de la base de datos
+            boolean isRemovedRecipe = daoRecipe.deleteRecipe(user.getId(), id_recipe);
+
+            // Si la receta se eliminó correctamente, eliminar la imagen de la receta
+            if (isRemovedRecipe) {
+                String recipeImg = "/var/www/html" + recipe.getPath_img();
+                System.out.println("Removing recipe image: " + recipeImg);
+                if (recipeImg != null && !recipeImg.equals("/var/www/html/resources/recipes/default.jpg")) {
+                    // Delete recipe image from the server using the path
+                    utils.deleteFileFromServer(recipeImg);
+                }
+
+                result.setResult("1");
+                result.setData("Recipe removed successfully");
+            } else {
+                result.setResult("0");
+                result.setData("Failed when trying to remove recipe");
+            }
         } else {
             result.setResult("0");
-            result.setData("Failed when trying to remove recipe");
+            result.setData("Failed to remove the following elements: " + String.join(", ", failedElements));
         }
+
         return result;
     }
+
+
+
 
 
 
@@ -766,8 +910,9 @@ public class Model {
      * @return Dataresult class with a 1 and the complete recipe if everything
      * is done correctly and a 0 with a message otherwise.
      */
-    public DataResult findFullRecipe(String id) {
+    public DataResult findFullRecipe(String token,String id) {
         DataResult result = new DataResult();
+        User user = daoUsers.findUserByToken(token);
 
         Recipe recipe = daoRecipe.findRecipeById(id);
         if (recipe.getPath() == null) {
@@ -786,6 +931,15 @@ public class Model {
         recipe.setSteps(steps);
 
         if (recipe != null) {
+            
+            //Comprueba si le ha dado like a la receta
+            boolean isLiked = daoRecipe.existsUserRecipeLiked(user.getId(), recipe.getId());
+            recipe.setLiked(isLiked);
+
+            //comprueba si tiene la receta como favorita
+            boolean isSaved = daoRecipe.existsUserRecipeSaved(user.getId(), recipe.getId());
+            recipe.setSaved(isSaved);
+
 
             result.setResult("1");
             result.setData(recipe);
@@ -859,8 +1013,12 @@ public class Model {
 
         // Check if the current user is following the user
         boolean isFollowing = daoUsers.checkFollow(this_user.getId(), id);
+        
+        //get the number of followers of the user
+        int nFollowers = daoUsers.getNumberOfFollowers(id);
 
         // Set the recipes and following status for the user
+        user.setnFollowers(nFollowers);
         user.setRecipes(recipes);
         user.setFollow(isFollowing);
 
@@ -1029,6 +1187,31 @@ public class Model {
 
         return result;
     }
+    
+    
+    public DataResult getRecipesFromCategory(String category) {
+        DataResult result = new DataResult();
+
+        try {
+            // Search for recipes matching the provided text
+            List<Recipe> recipes = daoRecipe.searchRecipesFromCategory(category);
+            if (recipes.isEmpty()) {
+                // No matches found
+                result.setResult("2");
+                result.setData("No matches found for category: " + category);
+            } else {
+                // Matches found
+                result.setResult("1");
+                result.setData(recipes);
+            }
+        } catch (Exception ex) {
+            System.out.println("Failed to get recipes: " + ex.getMessage());
+            result.setResult("0");
+            result.setData("Failed when trying to get the recipes by category: " + category);
+        }
+
+        return result;
+    }
 
     /**
      *
@@ -1096,9 +1279,88 @@ public class Model {
 
         return result;
     }
+    
+    public DataResult getChildComments(String id_recipe, String id_comment_parent) {
+        DataResult result = new DataResult();
+        
+        try {
+            // Find all parent comments for the recipe ID
+            List<Comment> comments = daoRecipe.findAllChildComments(id_recipe,id_comment_parent);
+            if (!comments.isEmpty()) {
+                // Parent comments found
+                result.setResult("1");
+                result.setData(comments);
+            } else {
+                // No comments found for the recipe
+                result.setResult("2");
+                result.setData("No resposes found for this comment.");
+            }
+        } catch (Exception ex) {
+            result.setResult("0");
+            result.setData("Failed to retrieve comments for this recipe.");
+            System.out.println("Error in getAllRecipeParentComments: " + ex.getMessage());
+        }
+        
+        return result;
+    }
+    
+    public DataResult getUserFollowedsRecipes(String token) {
+        DataResult result = new DataResult();
+        User user = daoUsers.findUserByToken(token);
+
+        try {
+            List<Recipe> recipes = daoRecipe.getUserFollowedsRecipes(user.getId());
+
+            if (!recipes.isEmpty()) {
+                for (Recipe recipe : recipes) {
+                    //Comprueba si le ha dado like a la receta
+                    boolean isLiked = daoRecipe.existsUserRecipeLiked(user.getId(), recipe.getId());
+                    recipe.setLiked(isLiked);
+
+                    //comprueba si tiene la receta como favorita
+                    boolean isSaved = daoRecipe.existsUserRecipeSaved(user.getId(), recipe.getId());
+                    recipe.setSaved(isSaved);
+                }
+
+                result.setResult("1");
+                result.setData(recipes);
+            } else {
+                result.setResult("2");
+                result.setData("No recipes found for this user");
+            }
+        } catch (Exception e) {
+            result.setResult("0");
+            result.setData("Failed to retrieve user followeds recipes.");
+            System.out.println("Error in getAllRecipeParentComments: " + e.getMessage());
+        }
+        return result;
+    }
 
     //-------------------------------------CATEGORIES-------------------------------------------------
     //-------------------------------------CATEGORIES-------------------------------------------------
+    
+    public DataResult processCategoriesOfRecipe(Category category, long recipeId) {
+        DataResult result = new DataResult();
+
+        // Find the category by its name
+        Category cg = daoRecipe.findCategoryByName(category.getName());
+
+        // Link the category to the recipe
+        boolean isLinked = daoRecipe.linkCategoryToRecipe(cg.getId(), recipeId);
+
+        if (isLinked) {
+            result.setResult("1");
+            result.setData("Category linked to the recipe correctly");
+        } else {
+            result.setResult("0");
+            result.setData("The Category could not be linked to the recipe");
+        }
+
+        return result;
+    }
+    
+    
+    
     //-------------------------------------INGREDIENTS-------------------------------------------------
     //-------------------------------------INGREDIENTS-------------------------------------------------
     /**
@@ -1130,4 +1392,5 @@ public class Model {
         return result;
     }
 
+    
 }

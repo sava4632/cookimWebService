@@ -113,5 +113,9 @@ public interface UserDaoInterface {
 
     public List<Recipe> getFavoriteRecipes(long id_user);
     // This method retrieves a list of favorite recipes for a specific user identified by their user ID.
+    
+    public int getNumberOfFollowers(String id_user);
+    public boolean modifyUserPassword(long id_user,String newPassword);
+    
 
 }

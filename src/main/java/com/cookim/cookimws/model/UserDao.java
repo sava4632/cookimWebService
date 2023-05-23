@@ -302,6 +302,7 @@ public class UserDao implements UserDaoInterface {
                 user = new User();
                 user.setId(rs.getLong("id"));
                 user.setUsername(rs.getString("username"));
+                user.setPassword(rs.getString("password"));
                 user.setFull_name(rs.getString("full_name"));
                 user.setEmail(rs.getString("email"));
                 user.setPhone(rs.getString("phone"));
@@ -621,5 +622,45 @@ public class UserDao implements UserDaoInterface {
 
         return favoriteRecipes;
     }
+
+    @Override
+    public int getNumberOfFollowers(String id) {
+        int numberOfFollowers = 0;
+
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM user_followeds WHERE followed_id = ?");
+            ps.setString(1, id);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                numberOfFollowers = rs.getInt(1);
+            }
+
+            rs.close();
+            ps.close();
+        } catch (Exception e) {
+            System.out.println("Failed to get number of followers: " + e.toString());
+        }
+
+        return numberOfFollowers;
+    }
+
+    @Override
+    public boolean modifyUserPassword(long id_user, String newPassword) {
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            PreparedStatement ps = conn.prepareStatement("UPDATE user SET password = ? WHERE id = ?");
+            ps.setString(1, newPassword);
+            ps.setLong(2, id_user);
+            int rowsAffected = ps.executeUpdate();
+            ps.close();
+
+            return rowsAffected > 0;
+        } catch (Exception e) {
+            System.out.println("Failed to modify user password: " + e.toString());
+            return false;
+        }
+    }
+
+
 
 }

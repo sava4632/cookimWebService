@@ -25,6 +25,7 @@ public class Recipe implements Serializable{
     
     private List<Ingredient> ingredients;
     private List<Step> steps;
+    private List<Category> categories;
     
 
     //ADD RECIPE CONSTRUCTOR
@@ -36,7 +37,8 @@ public class Recipe implements Serializable{
     }
 
 
-    public Recipe(long id, long id_user, String name, String description, String path_img, double rating, int likes, List<Ingredient> ingredients, List<Step> steps) {
+    public Recipe(long id, long id_user, String name, String description, String path_img, double rating, int likes, 
+                List<Ingredient> ingredients, List<Step> steps,List<Category> categories) {
         this.id = id;
         this.id_user = id_user;
         this.name = name;
@@ -46,6 +48,7 @@ public class Recipe implements Serializable{
         this.likes = likes;
         this.ingredients = ingredients;
         this.steps = steps;
+        this.categories = categories;
     }
 
     public Recipe(long id, long id_user, String name, String description, String path_img, double rating, int likes) {
@@ -90,6 +93,16 @@ public class Recipe implements Serializable{
         this.user_name = user_name;
         this.path = path;
     }
+
+    public List<Category> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(List<Category> categories) {
+        this.categories = categories;
+    }
+    
+    
 
     public boolean isLiked() {
         return liked;
@@ -204,9 +217,6 @@ public class Recipe implements Serializable{
 
     @Override
     public String toString() {
-        return "Recipe{" + "id=" + id + ", id_user=" + id_user + ", name=" + name + ", description=" + description + ", path_img=" + path_img + ", rating=" + rating + ", likes=" + likes + ", user_name=" + user_name + ", path=" + path + ", ingredients=" + ingredients + ", steps=" + steps + '}';
-    }
-    
-    
-    
+        return "Recipe{" + "id=" + id + ", id_user=" + id_user + ", name=" + name + ", description=" + description + ", path_img=" + path_img + ", rating=" + rating + ", likes=" + likes + ", user_name=" + user_name + ", path=" + path + ", liked=" + liked + ", saved=" + saved + ", ingredients=" + ingredients + ", steps=" + steps + ", categories=" + categories + '}';
+    }  
 }

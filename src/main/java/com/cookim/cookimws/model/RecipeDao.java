@@ -10,6 +10,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -793,6 +794,46 @@ public class RecipeDao implements RecipeDaoInterface {
         }
         return comments;
     }
+    
+    @Override
+    public List<Comment> findAllChildComments(String id_recipe, String id_parent_comment) {
+        List<Comment> childComments = new ArrayList<>();
+
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            String query = "SELECT c.id, c.id_user, c.id_recipe, c.text, c.data_send, c.id_parent_comment, u.username, u.path_img "
+                    + "FROM comment c "
+                    + "JOIN user u ON c.id_user = u.id "
+                    + "WHERE c.id_recipe = ? AND c.id_parent_comment = ?";
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setString(1, id_recipe);
+            ps.setString(2, id_parent_comment);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                long commentId = rs.getLong("id");
+                long userId = rs.getLong("id_user");
+                long idRecipe = rs.getLong("id_recipe");
+                String username = rs.getString("username");
+                String pathImg = rs.getString("path_img");
+                String text = rs.getString("text");
+                Timestamp timestamp = rs.getTimestamp("data_send");
+                long parentCommentId = rs.getLong("id_parent_comment");
+
+                Comment comment = new Comment(commentId, userId, idRecipe, text, timestamp, parentCommentId);
+                comment.setUsername(username);
+                comment.setPath_user_profile(pathImg);
+
+                childComments.add(comment);
+            }
+
+            rs.close();
+            ps.close();
+        } catch (Exception e) {
+            System.out.println("Failed to find child comments: " + e.toString());
+        }
+
+        return childComments;
+    }
 
     /**
      *
@@ -831,7 +872,7 @@ public class RecipeDao implements RecipeDaoInterface {
             int rowsAffected = ps.executeUpdate();
             ps.close();
 
-            return rowsAffected > 0;
+            return rowsAffected >= 0; // Devolver true cuando no se afecte ninguna fila
         } catch (Exception e) {
             System.out.println("Failed to delete likes from recipe: " + e.toString());
             return false;
@@ -854,7 +895,7 @@ public class RecipeDao implements RecipeDaoInterface {
             int rowsAffected = ps.executeUpdate();
             ps.close();
 
-            return rowsAffected > 0;
+            return rowsAffected >= 0; // Devolver true cuando no se afecte ninguna fila
         } catch (Exception e) {
             System.out.println("Failed to delete saved recipes: " + e.toString());
             return false;
@@ -921,6 +962,176 @@ public class RecipeDao implements RecipeDaoInterface {
         return false;
     }
 
-    
+    @Override
+    public List<Recipe> getUserFollowedsRecipes(long id_user) {
+        List<Recipe> recipes = new ArrayList<>();
+
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            PreparedStatement ps = conn.prepareStatement("SELECT followed_id FROM user_followeds WHERE follower_id = ?");
+            ps.setLong(1, id_user);
+            ResultSet rs = ps.executeQuery();
+
+            List<Long> followedIds = new ArrayList<>();
+            while (rs.next()) {
+                followedIds.add(rs.getLong("followed_id"));
+            }
+
+            rs.close();
+            ps.close();
+
+            if (!followedIds.isEmpty()) {
+                String followedIdsString = followedIds.stream()
+                        .map(String::valueOf)
+                        .collect(Collectors.joining(","));
+
+                String query = "SELECT * FROM recipe WHERE id_user IN (" + followedIdsString + ")";
+                ps = conn.prepareStatement(query);
+                rs = ps.executeQuery();
+
+                while (rs.next()) {
+                    long recipeId = rs.getLong("id");
+                    long userId = rs.getLong("id_user");
+                    String name = rs.getString("name");
+                    String description = rs.getString("description");
+                    String pathImg = rs.getString("path_img");
+                    int rating = rs.getInt("rating");
+                    int likes = rs.getInt("likes");
+
+                    Recipe recipe = new Recipe(recipeId, userId, name, description, pathImg, rating, likes);
+                    recipes.add(recipe);
+                }
+
+                rs.close();
+                ps.close();
+            }
+        } catch (Exception e) {
+            System.out.println("Failed to get user followeds recipes: " + e.toString());
+        }
+
+        return recipes;
+    }
+
+    @Override
+    public Category findCategoryByName(String category_name) {
+        Category category = null;
+
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            PreparedStatement ps = conn.prepareStatement("SELECT id, name FROM category WHERE name = ?");
+            ps.setString(1, category_name);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                long categoryId = rs.getLong("id");
+                String categoryName = rs.getString("name");
+                category = new Category(categoryId, categoryName);
+            }
+
+            rs.close();
+            ps.close();
+        } catch (Exception e) {
+            System.out.println("Failed to find category by name: " + e.toString());
+        }
+
+        return category;
+    }
+
+    @Override
+    public boolean linkCategoryToRecipe(long id_category, long id_recipe) {
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            PreparedStatement ps = conn.prepareStatement("INSERT INTO recipe_category (id_recipe, id_category) VALUES (?, ?)");
+            ps.setLong(1, id_recipe);
+            ps.setLong(2, id_category);
+            int rowsAffected = ps.executeUpdate();
+            ps.close();
+
+            return rowsAffected > 0;
+        } catch (Exception e) {
+            System.out.println("Failed to link category to recipe: " + e.toString());
+        }
+
+        return false;
+    }
+
+    @Override
+    public List<Recipe> searchRecipesFromCategory(String category_name) {
+        List<Recipe> recipes = new ArrayList<>();
+
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            // Obtener el ID de la categoría sin distinguir entre mayúsculas y minúsculas
+            PreparedStatement psCategory = conn.prepareStatement("SELECT id FROM category WHERE LOWER(name) = LOWER(?)");
+            psCategory.setString(1, category_name);
+            ResultSet rsCategory = psCategory.executeQuery();
+
+            if (rsCategory.next()) {
+                long categoryID = rsCategory.getLong("id");
+
+                // Obtener los IDs de las recetas que pertenecen a la categoría
+                PreparedStatement psRecipeCategory = conn.prepareStatement("SELECT id_recipe FROM recipe_category WHERE id_category = ?");
+                psRecipeCategory.setLong(1, categoryID);
+                ResultSet rsRecipeCategory = psRecipeCategory.executeQuery();
+
+                List<Long> recipeIDs = new ArrayList<>();
+                while (rsRecipeCategory.next()) {
+                    recipeIDs.add(rsRecipeCategory.getLong("id_recipe"));
+                }
+
+                rsRecipeCategory.close();
+                psRecipeCategory.close();
+
+                if (!recipeIDs.isEmpty()) {
+                    String recipeIDsString = recipeIDs.stream()
+                            .map(String::valueOf)
+                            .collect(Collectors.joining(","));
+
+                    // Obtener las recetas de la tabla recipe
+                    String query = "SELECT * FROM recipe WHERE id IN (" + recipeIDsString + ")";
+                    PreparedStatement psRecipe = conn.prepareStatement(query);
+                    ResultSet rsRecipe = psRecipe.executeQuery();
+
+                    while (rsRecipe.next()) {
+                        long recipeId = rsRecipe.getLong("id");
+                        long userId = rsRecipe.getLong("id_user");
+                        String name = rsRecipe.getString("name");
+                        String description = rsRecipe.getString("description");
+                        String pathImg = rsRecipe.getString("path_img");
+                        int rating = rsRecipe.getInt("rating");
+                        int likes = rsRecipe.getInt("likes");
+
+                        Recipe recipe = new Recipe(recipeId, userId, name, description, pathImg, rating, likes);
+                        recipes.add(recipe);
+                    }
+
+                    rsRecipe.close();
+                    psRecipe.close();
+                }
+            }
+
+            rsCategory.close();
+            psCategory.close();
+        } catch (Exception e) {
+            System.out.println("Failed to search recipes from category: " + e.toString());
+        }
+
+        return recipes;
+    }
+
+
+    @Override
+    public boolean deleteCategoriesToRecipe(long id_recipe) {
+        try (Connection conn = MariaDBConnection.getConnection()) {
+            // Eliminar los registros de la tabla recipe_category
+            PreparedStatement psDelete = conn.prepareStatement("DELETE FROM recipe_category WHERE id_recipe = ?");
+            psDelete.setLong(1, id_recipe);
+            int rowsAffected = psDelete.executeUpdate();
+            psDelete.close();
+
+            // Verificar si se eliminaron registros
+            return rowsAffected >= 0; // Devolver true cuando no se afecte ninguna fila
+        } catch (Exception e) {
+            System.out.println("Failed to delete categories to recipe: " + e.toString());
+            return false;
+        }
+    }
+
 
 }

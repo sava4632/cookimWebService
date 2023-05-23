@@ -1,5 +1,6 @@
 package com.cookim.cookimws.endpoints;
 
+import com.cookim.cookimws.model.Category;
 import com.cookim.cookimws.model.Comment;
 import com.cookim.cookimws.model.Ingredient;
 import com.cookim.cookimws.model.Model;
@@ -44,8 +45,12 @@ public class RecipeAccessMethods {
             app.post(props.getProperty("modify_recipe"), this::modifyRecipe);
             app.post(props.getProperty("steps"), this::recipeView);
             app.post(props.getProperty("search_recipe"), this::searchRecipe);
+            app.post(props.getProperty("search_recipe_category"), this::searchRecipeByCategory);
             app.post(props.getProperty("recipe_comments"), this::addRecipeComment);
             app.post(props.getProperty("parent_comments"), this::getRecipeParentComments);
+            app.post(props.getProperty("child_comments"), this::getRecipeChildComments);
+            app.post(props.getProperty("followeds_recipes"), this::followedsRecipes);
+            
             
 
             //INGREDIENTS
@@ -135,6 +140,9 @@ public class RecipeAccessMethods {
         // Retrieve the recipe JSON part from the request
         String recipeJson = ctx.formParam("recipe");
         Recipe recipe = gson.fromJson(recipeJson, Recipe.class);
+        LOGGER.debug("Recipe JSON: {}", recipeJson);
+
+        
 
         // Use the uploaded file here
         UploadedFile file = ctx.uploadedFile("image");
@@ -152,6 +160,7 @@ public class RecipeAccessMethods {
                 DataResult result = model.addNewRecipe(recipe, token, file);
                 DataResult resultProcessStep = new DataResult();
                 DataResult resultProcessIngredients = new DataResult();
+                DataResult resultProcessCategories = new DataResult();
 
                 long recipeId = result.getRecipeId();
 
@@ -169,6 +178,27 @@ public class RecipeAccessMethods {
                     }
 
                     LOGGER.info("Result of the request Ingredient: {}", resultProcessIngredients.toString());
+                }
+                
+                //Process each categories
+                List<Category> categories = recipe.getCategories();
+                if (categories != null) {
+                    LOGGER.debug("Categories: {}", categories.toString());
+                } else {
+                    LOGGER.debug("Categories is null");
+                }
+                boolean allCategoriesAdded = true;
+                for (Category category : categories) {
+                    LOGGER.debug("Processing catefories: {}", category.getName());
+
+                    // Call the method in the model that handles the categoty
+                    resultProcessCategories = model.processCategoriesOfRecipe(category, recipeId);
+
+                    if (!resultProcessCategories.getResult().equals("1")) {
+                        allCategoriesAdded = false;
+                    }
+
+                    LOGGER.info("Result of the request Categories: {}", resultProcessCategories.toString());
                 }
 
                 // Process each step
@@ -211,7 +241,7 @@ public class RecipeAccessMethods {
                     LOGGER.info("Result of the request Step: {}", resultProcessStep.toString());
                 }
 
-                if (result.getResult().equals("1") && allStepsAdded && allIngredientsAdded) {
+                if (result.getResult().equals("1") && allStepsAdded && allIngredientsAdded && allCategoriesAdded) {
                     result.setData("Recipe and all steps added successfully");
                 } else {
                     result.setResult("2");
@@ -341,18 +371,18 @@ public class RecipeAccessMethods {
         String data = ctx.header("Authorization").replace("Bearer ", "");
         String[] parts = data.split(":");
         String token = parts[0];
-        String id = parts[1];
+        String id_recipe = parts[1];
 
         // Check if the user is authenticated
         DataResult isAuthenticated = model.getUserByToken(token);
         if (isAuthenticated.getResult().equals("0")) {
-            Gson gson = new Gson();
+            Gson gson = new Gson();               
             ctx.result(gson.toJson(isAuthenticated));
             return;
         }
 
         // Retrieve the full details of the recipe
-        DataResult result = model.findFullRecipe(id);
+        DataResult result = model.findFullRecipe(token,id_recipe);
         LOGGER.info("Result of the request: {}", result.toString());
 
         Gson gson = new Gson();
@@ -386,6 +416,37 @@ public class RecipeAccessMethods {
 
         // Perform the recipe search based on the provided text
         DataResult result = model.getRecipesEqualToText(text);
+        LOGGER.info("Result of the request: {}", result.toString());
+
+        Gson gson = new Gson();
+        ctx.result(gson.toJson(result));
+        LOGGER.info("Sent HTTP response with status code: {} at {}", ctx.status(), LocalDateTime.now());
+        LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
+    }
+    
+    /**
+     * Searches for recipes that match the given category.
+     */
+    public void searchRecipeByCategory(io.javalin.http.Context ctx) {
+        LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
+        LOGGER.info("Receiving HTTP POST request on the route: {}", ctx.path());
+
+        // Retrieve the user's token and search text from the request header
+        String data = ctx.header("Authorization").replace("Bearer ", "");
+        String[] parts = data.split(":");
+        String token = parts[0];
+        String category = parts[1];
+
+        // Check if the user is authenticated
+        DataResult isAuthenticated = model.getUserByToken(token);
+        if (isAuthenticated.getResult().equals("0")) {
+            Gson gson = new Gson();
+            ctx.result(gson.toJson(isAuthenticated));
+            return;
+        }
+
+        // Perform the recipe search based on the provided text
+        DataResult result = model.getRecipesFromCategory(category);
         LOGGER.info("Result of the request: {}", result.toString());
 
         Gson gson = new Gson();
@@ -442,6 +503,32 @@ public class RecipeAccessMethods {
         LOGGER.info("Sent HTTP response with status code: {} at {}", ctx.status(), LocalDateTime.now());
         LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
     }
+    
+    //get followeds recipes
+    public void followedsRecipes(io.javalin.http.Context ctx){
+        LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
+        LOGGER.info("Receiving HTTP POST request on the route: {}", ctx.path());
+
+        // Retrieve the user's token and search text from the request header
+        String token = ctx.header("Authorization").replace("Bearer ", "");
+
+        // Check if the user is authenticated
+        DataResult isAuthenticated = model.getUserByToken(token);
+        if (isAuthenticated.getResult().equals("0")) {
+            Gson gson = new Gson();
+            ctx.result(gson.toJson(isAuthenticated));
+            return;
+        }
+
+        // Perform the recipe search based on the provided text
+        DataResult result = model.getUserFollowedsRecipes(token);
+        LOGGER.info("Result of the request: {}", result.toString());
+
+        Gson gson = new Gson();
+        ctx.result(gson.toJson(result));
+        LOGGER.info("Sent HTTP response with status code: {} at {}", ctx.status(), LocalDateTime.now());
+        LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
+    }
 
     
     /**
@@ -477,6 +564,36 @@ public class RecipeAccessMethods {
         LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
     }
 
+    public void getRecipeChildComments (io.javalin.http.Context ctx) {
+        LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
+        LOGGER.info("Receiving HTTP POST request on the route: {}", ctx.path());
+
+        // Retrieve the user's token and recipe ID from the request header
+        String data = ctx.header("Authorization").replace("Bearer ", "");
+        String[] parts = data.split(":");
+        String token = parts[0];
+        String id_recipe = parts[1];
+        String id_comment_parent = parts[2];
+
+        LOGGER.info("Data: {}", data);
+
+        // Check if the user is authenticated
+        DataResult isAuthenticated = model.getUserByToken(token);
+        if (isAuthenticated.getResult().equals("0")) {
+            Gson gson = new Gson();
+            ctx.result(gson.toJson(isAuthenticated));
+            return;
+        }
+
+        // Retrieve all parent comments for the recipe
+        DataResult result = model.getChildComments(id_recipe,id_comment_parent);
+
+        LOGGER.info("Result of the request: {}", result.toString());
+        Gson gson = new Gson();
+        ctx.result(gson.toJson(result));
+        LOGGER.info("Sent HTTP response with status code: {} at {}", ctx.status(), LocalDateTime.now());
+        LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
+    }
     
 
     //-------------------------------------INGREDIENTS-------------------------------------------------

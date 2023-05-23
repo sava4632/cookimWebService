@@ -191,4 +191,10 @@ public interface RecipeDaoInterface {
      */
     public boolean existsUserRecipeSaved(long id_user, long id_recipe);
     
+    public List<Recipe> getUserFollowedsRecipes(long id_user);
+    public List<Comment> findAllChildComments(String id_recipe,String id_parent_comment);
+    public Category findCategoryByName(String category_name);
+    public boolean linkCategoryToRecipe(long id_category,long id_recipe);
+    public List<Recipe> searchRecipesFromCategory(String category_name);
+    public boolean deleteCategoriesToRecipe(long id_recipe);
 }

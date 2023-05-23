@@ -7,15 +7,17 @@ package com.cookim.cookimws.model;
 public class Category {
     private long id;
     private String name;
-    private String description;
-    private String icon_path;
 
-    public Category(long id, String name, String description, String icon_path) {
+    public Category(long id, String name) {
         this.id = id;
         this.name = name;
-        this.description = description;
-        this.icon_path = icon_path;
     }
+
+    public Category(String name) {
+        this.name = name;
+    }
+    
+    
 
     public long getId() {
         return id;
@@ -33,21 +35,9 @@ public class Category {
         this.name = name;
     }
 
-    public String getDescription() {
-        return description;
+    @Override
+    public String toString() {
+        return "Category{ name=" + name + '}';
     }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getIcon_path() {
-        return icon_path;
-    }
-
-    public void setIcon_path(String icon_path) {
-        this.icon_path = icon_path;
-    }
-
-   
+    
 }

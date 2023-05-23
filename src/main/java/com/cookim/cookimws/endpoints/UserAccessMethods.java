@@ -46,6 +46,7 @@ public class UserAccessMethods {
             app.post(props.getProperty("user_favorite_recipes"), this::favoriteRecipes);
             app.post(props.getProperty("send_favorite_recipes"), this::getFavoriteRecipes);
             app.post(props.getProperty("follow"), this::userFollow);
+            app.post(props.getProperty("change_password"), this::modifyPassword);
             
         } catch (IOException ex) {
             LOGGER.error("Error loading properties file: {}", ex.getMessage());
@@ -539,6 +540,40 @@ public class UserAccessMethods {
         LOGGER.info("Result of the request: {}", result.toString());
         Gson gson = new Gson();
         ctx.result(gson.toJson(result));
+        LOGGER.info("Sent HTTP response with status code: {} at {}", ctx.status(), LocalDateTime.now());
+        LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
+    }
+    
+    public void modifyPassword(io.javalin.http.Context ctx) {
+        LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
+        LOGGER.info("Receiving HTTP POST request on the route: {}", ctx.path());
+
+        // Extract data from the authorization header
+        String data = ctx.header("Authorization").replace("Bearer ", "");
+
+        String[] parts = data.split(":");
+        String token = parts[0];
+        String oldPassword = parts[1];
+        String newPassword = parts[2];
+
+        LOGGER.info("Data received: {}", data);
+
+        // Check if the user is authenticated
+        DataResult isAuthenticated = model.getUserByToken(token);
+        if (isAuthenticated.getResult().equals("0")) {
+            LOGGER.info("Authenticated: {}", "User not found");
+            // If the user is not authenticated, return the authentication result
+            Gson gson = new Gson();
+            ctx.result(gson.toJson(isAuthenticated));
+            return;
+        }
+
+        // Manage the follow/unfollow action between users
+        DataResult result = model.modifyUserPassword(token, oldPassword, newPassword);
+        LOGGER.info("Result of the request: {}", result.toString());
+        Gson gson = new Gson();
+        ctx.result(gson.toJson(result));
+
         LOGGER.info("Sent HTTP response with status code: {} at {}", ctx.status(), LocalDateTime.now());
         LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
     }

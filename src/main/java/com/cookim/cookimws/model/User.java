@@ -19,6 +19,7 @@ public class User {
     private long id_rol;
     private String token;
     
+    private int nFollowers;
     private List<Recipe> recipes;
     private List<Long> recipe_likes;
     private boolean follow;
@@ -135,6 +136,16 @@ public class User {
 
     public User() {
     }
+
+    public int getnFollowers() {
+        return nFollowers;
+    }
+
+    public void setnFollowers(int nFollowers) {
+        this.nFollowers = nFollowers;
+    }
+    
+    
 
     public List<Long> getRecipe_likes() {
         return recipe_likes;

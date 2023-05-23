@@ -101,7 +101,7 @@ Retrieves a list of ingredients with an ID greater than the specified maximum ID
             int rowsAffected = ps.executeUpdate();
             ps.close();
 
-            return rowsAffected > 0;
+            return rowsAffected >= 0; // Devolver true cuando no se afecte ninguna fila
         } catch (Exception e) {
             System.out.println("Failed to delete ingredients for recipe: " + e.toString());
             return false;
