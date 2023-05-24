@@ -12,6 +12,7 @@ import io.javalin.Javalin;
 import io.javalin.http.UploadedFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -41,6 +42,7 @@ public class RecipeAccessMethods {
             app.post(props.getProperty("home_page"), this::homePage);
             app.post(props.getProperty("home_page_preferences"), this::homePagePreferences);
             app.post(props.getProperty("add_recipe"), this::addRecipe);
+            app.post(props.getProperty("assing_category"), this::assignCategory);
             app.post(props.getProperty("remove_recipe"), this::removeRecipe);
             app.post(props.getProperty("modify_recipe"), this::modifyRecipe);
             app.post(props.getProperty("steps"), this::recipeView);
@@ -50,8 +52,6 @@ public class RecipeAccessMethods {
             app.post(props.getProperty("parent_comments"), this::getRecipeParentComments);
             app.post(props.getProperty("child_comments"), this::getRecipeChildComments);
             app.post(props.getProperty("followeds_recipes"), this::followedsRecipes);
-            
-            
 
             //INGREDIENTS
             app.post(props.getProperty("ingredient_list"), this::getAllIngredients);
@@ -65,17 +65,22 @@ public class RecipeAccessMethods {
 
     //------------------------------------------RECIPES METODS------------------------------------------------
     //------------------------------------------RECIPES METODS------------------------------------------------
-    //GET
     /**
-     * Retrieves all recipes with user information for the home page.
+     *
+     * Retrieves the home page data, including recipes with user information,
+     * based on the provided token.
+     *
+     * Returns the home page data as a JSON response.
+     *
+     * @param ctx The Javalin HTTP context.
      */
     public void homePage(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
         LOGGER.info("Receiving HTTP POST request on the route: {}", ctx.path());
         String token = ctx.header("Authorization").replace("Bearer ", "");
-        
+
         LOGGER.info("Data obtained:{}", token);
-        
+
         DataResult isAuthenticated = model.getUserByToken(token);
         if (isAuthenticated.getResult().equals("0")) {
             Gson gson = new Gson();
@@ -92,10 +97,12 @@ public class RecipeAccessMethods {
         LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
     }
 
-
-    //POST
     /**
-     * Retrieves all recipes by a specific category for the home page.
+     *
+     * Retrieves recipes based on the specified category ID and returns them as
+     * a JSON response.
+     *
+     * @param ctx The Javalin HTTP context.
      */
     public void homePagePreferences(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
@@ -114,14 +121,20 @@ public class RecipeAccessMethods {
         LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
     }
 
-
-
     /**
-     * Adds a new recipe to the system.
+     *
+     * Handles the addition of a new recipe. Parses the request data, including
+     * the recipe JSON and optional image file,
+     *
+     * and adds the recipe to the model. Also processes the recipe's ingredients
+     * and steps.
+     *
+     * @param ctx The Javalin HTTP context.
      */
     public void addRecipe(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
         LOGGER.info("Receiving HTTP POST request on the route: {}", ctx.path());
+        //System.out.println("BODY"  +ctx.body());
 
         // Retrieve the user's token from the request header
         String token = ctx.header("Authorization").replace("Bearer ", "");
@@ -142,8 +155,6 @@ public class RecipeAccessMethods {
         Recipe recipe = gson.fromJson(recipeJson, Recipe.class);
         LOGGER.debug("Recipe JSON: {}", recipeJson);
 
-        
-
         // Use the uploaded file here
         UploadedFile file = ctx.uploadedFile("image");
         if (file != null) {
@@ -160,7 +171,7 @@ public class RecipeAccessMethods {
                 DataResult result = model.addNewRecipe(recipe, token, file);
                 DataResult resultProcessStep = new DataResult();
                 DataResult resultProcessIngredients = new DataResult();
-                DataResult resultProcessCategories = new DataResult();
+                //DataResult resultProcessCategories = new DataResult();
 
                 long recipeId = result.getRecipeId();
 
@@ -179,9 +190,9 @@ public class RecipeAccessMethods {
 
                     LOGGER.info("Result of the request Ingredient: {}", resultProcessIngredients.toString());
                 }
-                
+
                 //Process each categories
-                List<Category> categories = recipe.getCategories();
+                /*List<Category> categories = recipe.getCategories();
                 if (categories != null) {
                     LOGGER.debug("Categories: {}", categories.toString());
                 } else {
@@ -199,8 +210,7 @@ public class RecipeAccessMethods {
                     }
 
                     LOGGER.info("Result of the request Categories: {}", resultProcessCategories.toString());
-                }
-
+                }*/
                 // Process each step
                 List<Step> steps = recipe.getSteps();
                 boolean allStepsAdded = true;
@@ -241,8 +251,9 @@ public class RecipeAccessMethods {
                     LOGGER.info("Result of the request Step: {}", resultProcessStep.toString());
                 }
 
-                if (result.getResult().equals("1") && allStepsAdded && allIngredientsAdded && allCategoriesAdded) {
+                if (result.getResult().equals("1") && allStepsAdded && allIngredientsAdded) {
                     result.setData("Recipe and all steps added successfully");
+                    result.setRecipeId(recipeId);
                 } else {
                     result.setResult("2");
                     result.setData("Error: Failed to add recipe or steps");
@@ -260,11 +271,11 @@ public class RecipeAccessMethods {
                 ctx.result(gson.toJson(invalidFileResult));
             }
         } else {
-            LOGGER.debug("Null image has been sent");
+            LOGGER.debug("Recipe cover image is null");
             // Do something here if no file was uploaded
             DataResult noFileResult = new DataResult();
             noFileResult.setResult("0");
-            noFileResult.setData("Error: Null image has been sent");
+            noFileResult.setData("Error: Recipe cover image is null ");
             LOGGER.info("DATA: {}", noFileResult.toString());
             ctx.result(gson.toJson(noFileResult));
         }
@@ -273,9 +284,11 @@ public class RecipeAccessMethods {
         LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
     }
 
-
     /**
-     * Removes a recipe from the system.
+     *
+     * Removes a recipe based on the HTTP POST request received.
+     *
+     * @param ctx The HTTP context containing the request information.
      */
     public void removeRecipe(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
@@ -286,9 +299,9 @@ public class RecipeAccessMethods {
         String[] parts = data.split(":");
         String token = parts[0];
         String id = parts[1];
-        
+
         LOGGER.info("Data:{}", data);
-        
+
         // Check if the user is authenticated
         DataResult isAuthenticated = model.getUserByToken(token);
 
@@ -300,9 +313,8 @@ public class RecipeAccessMethods {
         }
 
         // Retrieve the recipe ID from the request form parameter
-
         // Delete the recipe from the model and retrieve the result
-        DataResult result = model.deleteRecipe(token,id);
+        DataResult result = model.deleteRecipe(token, id);
         LOGGER.info("Result of the request: {}", result.toString());
 
         Gson gson = new Gson();
@@ -311,9 +323,58 @@ public class RecipeAccessMethods {
         LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
     }
 
+    /**
+     *
+     * Assigns categories to a recipe based on the HTTP POST request received.
+     *
+     * @param ctx The HTTP context containing the request information.
+     */
+    public void assignCategory(io.javalin.http.Context ctx) {
+        LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
+        LOGGER.info("Receiving HTTP POST request on the route: {}", ctx.path());
+
+        // Retrieve the user's token and recipe ID from the request header
+        String data = ctx.header("Authorization").replace("Bearer ", "");
+        String[] parts = data.split(":");
+        String token = parts[0];
+        String id_recipe = parts[1];
+        int num_categories = Integer.parseInt(parts[2]);
+
+        List<Category> categories = new ArrayList<>();
+        int aux = 4;
+        for (int i = 0; i < num_categories; i++) {
+            String categoryName = parts[3 + i];
+            Category category = new Category(categoryName);
+            categories.add(category);
+        }
+
+        LOGGER.info("Data: {}", data);
+        LOGGER.info("Categories: {}", categories);
+
+        // Check if the user is authenticated
+        DataResult isAuthenticated = model.getUserByToken(token);
+        LOGGER.info("Token: {}", token);
+        if (isAuthenticated.getResult().equals("0")) {
+            Gson gson = new Gson();
+            ctx.result(gson.toJson(isAuthenticated));
+            return;
+        }
+
+        // Assign the categories to the recipe
+        DataResult result = model.assingCategoryToRecipe(id_recipe, categories);
+        LOGGER.info("Result of the request: {}", result.toString());
+
+        Gson gson = new Gson();
+        ctx.result(gson.toJson(result));
+        LOGGER.info("Sent HTTP response with status code: {} at {}", ctx.status(), LocalDateTime.now());
+        LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
+    }
 
     /**
-     * Modifies a recipe in the system.
+     *
+     * Modifies a recipe based on the HTTP POST request received.
+     *
+     * @param ctx The HTTP context containing the request information.
      */
     public void modifyRecipe(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
@@ -359,9 +420,12 @@ public class RecipeAccessMethods {
         LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
     }
 
-
     /**
-     * Retrieves the details of a specific recipe.
+     *
+     * Retrieves the full details of a recipe based on the provided recipe ID in
+     * the HTTP POST request.
+     *
+     * @param ctx The HTTP context containing the request information.
      */
     public void recipeView(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
@@ -376,13 +440,13 @@ public class RecipeAccessMethods {
         // Check if the user is authenticated
         DataResult isAuthenticated = model.getUserByToken(token);
         if (isAuthenticated.getResult().equals("0")) {
-            Gson gson = new Gson();               
+            Gson gson = new Gson();
             ctx.result(gson.toJson(isAuthenticated));
             return;
         }
 
         // Retrieve the full details of the recipe
-        DataResult result = model.findFullRecipe(token,id_recipe);
+        DataResult result = model.findFullRecipe(token, id_recipe);
         LOGGER.info("Result of the request: {}", result.toString());
 
         Gson gson = new Gson();
@@ -391,10 +455,11 @@ public class RecipeAccessMethods {
         LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
     }
 
-    
-    
     /**
-     * Searches for recipes that match the given text.
+     *
+     * Searches for recipes based on the provided text in the HTTP POST request.
+     *
+     * @param ctx The HTTP context containing the request information.
      */
     public void searchRecipe(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
@@ -423,9 +488,12 @@ public class RecipeAccessMethods {
         LOGGER.info("Sent HTTP response with status code: {} at {}", ctx.status(), LocalDateTime.now());
         LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
     }
-    
+
     /**
-     * Searches for recipes that match the given category.
+     *
+     * Searches for recipes by category based on the HTTP POST request received.
+     *
+     * @param ctx The HTTP context containing the request information.
      */
     public void searchRecipeByCategory(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
@@ -455,9 +523,11 @@ public class RecipeAccessMethods {
         LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
     }
 
-    
     /**
-     * Adds a comment to a recipe.
+     *
+     * Adds a comment to a recipe based on the HTTP POST request received.
+     *
+     * @param ctx The HTTP context containing the request information.
      */
     public void addRecipeComment(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
@@ -503,9 +573,15 @@ public class RecipeAccessMethods {
         LOGGER.info("Sent HTTP response with status code: {} at {}", ctx.status(), LocalDateTime.now());
         LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
     }
-    
-    //get followeds recipes
-    public void followedsRecipes(io.javalin.http.Context ctx){
+
+    /**
+     *
+     * Retrieves the recipes followed by the user based on the HTTP POST request
+     * received.
+     *
+     * @param ctx The HTTP context containing the request information.
+     */
+    public void followedsRecipes(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
         LOGGER.info("Receiving HTTP POST request on the route: {}", ctx.path());
 
@@ -530,9 +606,12 @@ public class RecipeAccessMethods {
         LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
     }
 
-    
     /**
-     * Retrieves all parent comments for a recipe.
+     *
+     * Retrieves parent comments for a recipe based on the HTTP POST request
+     * received.
+     *
+     * @param ctx The HTTP context containing the request information.
      */
     public void getRecipeParentComments(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
@@ -564,7 +643,14 @@ public class RecipeAccessMethods {
         LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
     }
 
-    public void getRecipeChildComments (io.javalin.http.Context ctx) {
+    /**
+     *
+     * Retrieves child comments for a recipe based on the HTTP POST request
+     * received.
+     *
+     * @param ctx The HTTP context containing the request information.
+     */
+    public void getRecipeChildComments(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
         LOGGER.info("Receiving HTTP POST request on the route: {}", ctx.path());
 
@@ -586,7 +672,7 @@ public class RecipeAccessMethods {
         }
 
         // Retrieve all parent comments for the recipe
-        DataResult result = model.getChildComments(id_recipe,id_comment_parent);
+        DataResult result = model.getChildComments(id_recipe, id_comment_parent);
 
         LOGGER.info("Result of the request: {}", result.toString());
         Gson gson = new Gson();
@@ -594,13 +680,14 @@ public class RecipeAccessMethods {
         LOGGER.info("Sent HTTP response with status code: {} at {}", ctx.status(), LocalDateTime.now());
         LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
     }
-    
 
     //-------------------------------------INGREDIENTS-------------------------------------------------
     //-------------------------------------INGREDIENTS-------------------------------------------------
     /**
-     * Retrieves all ingredients with an ID lower or equal to a given maximum
-     * ID.
+     *
+     * Retrieves all ingredients based on the HTTP POST request received.
+     *
+     * @param ctx The HTTP context containing the request information.
      */
     public void getAllIngredients(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");

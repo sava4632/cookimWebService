@@ -30,7 +30,7 @@ public class CookimWebService {
 
     private static Javalin createJavalinApp() {
         SSLPlugin sslPlugin = createSslPlugin(); // creates an instance of the SSLPlugin for HTTPS
-        return Javalin.create(config -> config.plugins.register(sslPlugin)).start(HTTP_PORT); // creates and starts the Javalin app with the SSLPlugin
+        return Javalin.create(config -> config.plugins.register(sslPlugin)).start(HTTP_PORT); // creates and starts the Javalin app with the SSLPlugin      
     }
 
     private static SSLPlugin createSslPlugin() {

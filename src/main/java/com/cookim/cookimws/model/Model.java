@@ -695,6 +695,35 @@ public class Model {
 
         return result;
     }
+    
+    public DataResult assingCategoryToRecipe(String id_recipe, List<Category> categoryList) {
+        DataResult result = new DataResult();
+        Recipe recipe = daoRecipe.findRecipeById(id_recipe);
+        
+        boolean allCategoriesAssigned = true;
+        for(Category c : categoryList){
+            // Find the category by its name
+            Category category = daoRecipe.findCategoryByName(c.getName());
+            
+            // Link the category to the recipe
+            boolean isLinked = daoRecipe.linkCategoryToRecipe(category.getId(), recipe.getId());
+            
+            if (!isLinked) {
+                allCategoriesAssigned = false;
+                break;
+            }
+        }
+        
+        if(allCategoriesAssigned){
+            result.setResult("1");
+            result.setData("Categories added to recipe " + recipe.getName() + "successfully");
+        }else{
+            result.setResult("0");
+            result.setData("Some categories could not be assigned to recipe " + recipe.getName());
+        }
+        return result;
+    }
+
 
     /**
      * Method that removes a recipe from the database .
@@ -702,76 +731,6 @@ public class Model {
      * @param id the id of the recipe to delete
      * @return 1 if the recipe was added successfully, 0 otherwise
      */
-    /**
-     * Method that removes a recipe from the database .
-     *
-     * @param id the id of the recipe to delete
-     * @return 1 if the recipe was added successfully, 0 otherwise
-     */
-//    public DataResult deleteRecipe(String token, String id_recipe) {
-//        DataResult result = new DataResult();
-//        Utils utils = new Utils();
-//        
-//        User user = daoUsers.findUserByToken(token);
-//        Recipe recipe = daoRecipe.findRecipeById(id_recipe);
-//        List<Step> steps = daoRecipe.findAllStepsByRecipe(id_recipe);
-//        
-//        //Delete user likes from recipe
-//        boolean isDeletedLikes = daoRecipe.deleteLikesFromRecipe(recipe.getId());
-//        // Eliminar ingredientes de la receta
-//        boolean isRemovedIngredients = daoIngredient.deleteIngredientsToRecipe(recipe.getId());
-//        //Delete user recipes saved
-//        boolean isRemovedRecipesSaved = daoRecipe.deleteRecipesSaved(recipe.getId());
-//        //Remove categories
-//        boolean isREmovedCategories = daoRecipe.deleteCategoriesToRecipe(recipe.getId());
-//
-//        // Eliminar archivos de imagen de cada paso
-//        if (!steps.isEmpty()) {
-//            for (Step step : steps) {
-//                String pathImg = "/var/www/html" + step.getPath();
-//                System.out.println("Eliminando la imagen del paso: " + pathImg);
-//                if (pathImg != null) {
-//                    // Eliminar archivo del servidor utilizando la ruta
-//                    utils.deleteFileFromServer(pathImg);
-//                }
-//            }
-//        }
-//        
-//
-//        // Eliminar pasos de la receta si se eliminaron todos los archivos de imagen
-//        if (!steps.isEmpty()) {
-//            if (utils.areAllStepImagesRemoved(steps)) {
-//                boolean isRemovedSteps = daoRecipe.deleteStepsByRecipe(recipe.getId());
-//                if (!isRemovedSteps) {
-//                    result.setResult("0");
-//                    result.setData("Failed when trying to remove steps");
-//                    return result;
-//                }
-//            }
-//        }
-//        // Eliminar la receta de la base de datos
-//        boolean isRemovedRecipe = daoRecipe.deleteRecipe(user.getId(), id_recipe);
-//
-//        // Si la receta y todos los pasos se eliminaron correctamente, eliminar la imagen de la receta
-//        if (isRemovedRecipe && utils.areAllStepImagesRemoved(steps)) {
-//            String recipeImg = "/var/www/html" + recipe.getPath_img();
-//            System.out.println("Removing recipe image: " + recipeImg);
-//            if (recipeImg != null && !recipeImg.equals("/var/www/html/resources/recipes/default.jpg")) {
-//                // Delete recipe image from the server using the path
-//                utils.deleteFileFromServer(recipeImg);
-//            }
-//        }
-//
-//        if (isRemovedRecipe) {
-//            result.setResult("1");
-//            result.setData("Recipe removed successfully");
-//        } else {
-//            result.setResult("0");
-//            result.setData("Failed when trying to remove recipe");
-//        }
-//        return result;
-//    }
-    
     public DataResult deleteRecipe(String token, String id_recipe) {
         DataResult result = new DataResult();
         Utils utils = new Utils();
@@ -1391,6 +1350,8 @@ public class Model {
 
         return result;
     }
+
+   
 
     
 }

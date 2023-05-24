@@ -1,10 +1,13 @@
 package com.cookim.cookimws.model;
 
+import com.google.gson.annotations.Expose;
+
 /**
  *
  * @author Samuel
  */
 public class Category {
+    @Expose(serialize = false)
     private long id;
     private String name;
 

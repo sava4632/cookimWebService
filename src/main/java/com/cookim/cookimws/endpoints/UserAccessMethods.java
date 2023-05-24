@@ -55,7 +55,8 @@ public class UserAccessMethods {
     }
 
     /**
-     * Retrieves all users.
+     * Retrieves all users and sends them as a JSON response.
+     * @param ctx The Javalin HTTP context. 
      */
     public void getAllUsers(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
@@ -76,7 +77,8 @@ public class UserAccessMethods {
 
 
     /**
-     * Retrieves home data for a user.
+     * Retrieves the home data for a user and returns it as a JSON response.
+     * @param ctx The Javalin HTTP context. 
      */
     public void getUserHomeData(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
@@ -110,7 +112,8 @@ public class UserAccessMethods {
 
 
     /**
-     * Modifies a user's information.
+     * Modifies user information based on the provided data and returns the result as a JSON response.
+     * @param ctx The Javalin HTTP context.
      */
     public void modifyUser(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
@@ -166,7 +169,8 @@ public class UserAccessMethods {
 
 
     /**
-     * Deletes a user account.
+     * Deletes the user account associated with the provided token and returns the result as a JSON response.
+     * @param ctx The Javalin HTTP context.
      */
     public void deleteUser(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
@@ -197,7 +201,8 @@ public class UserAccessMethods {
 
 
     /**
-     * Creates a new user.
+     * Creates a new user based on the provided form parameters and returns the result as a JSON response.
+     * @param ctx The Javalin HTTP context. 
      */
     public void createUser(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
@@ -242,7 +247,8 @@ public class UserAccessMethods {
 
 
     /**
-     * Performs auto-login for a user.
+     *  Performs auto-login using the provided token and returns the result as a JSON response.
+     *  @param ctx The Javalin HTTP context. 
      */
     public void autoLogin(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
@@ -264,7 +270,8 @@ public class UserAccessMethods {
 
 
     /**
-     * Handles user login.
+     * Validates the user credentials provided in the authorization header and returns the result as a JSON response.
+     * @param ctx The Javalin HTTP context.
      */
     public void login(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
@@ -295,7 +302,8 @@ public class UserAccessMethods {
 
 
     /**
-     * Handles recipe liking.
+     * Likes or unlikes a recipe based on the provided data in the authorization header and returns the result as a JSON response.
+     * @param ctx The Javalin HTTP context.
      */
     public void likeRecipe(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
@@ -340,7 +348,8 @@ public class UserAccessMethods {
 
 
     /**
-     * Handles user logout.
+     * Finishes the user session associated with the provided token and returns the result as a JSON response.
+     * @param ctx The Javalin HTTP context.
      */
     public void logout(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
@@ -364,7 +373,9 @@ public class UserAccessMethods {
 
     
     /**
-     * Retrieves the profile of the authenticated user.
+     * Retrieves the profile information and associated recipes of the authenticated user based on the provided token and user ID,
+     * and returns the result as a JSON response.
+     * @param ctx The Javalin HTTP context.
      */
     public void myProfile(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
@@ -399,7 +410,9 @@ public class UserAccessMethods {
 
     
     /**
-     * Retrieves the profile of a specific user.
+     * Retrieves the profile information and associated recipes of a user based on the provided token and user ID,
+     * and returns the result as a JSON response.
+     * @param ctx The Javalin HTTP context.
      */
     public void getUserProfile(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
@@ -438,7 +451,9 @@ public class UserAccessMethods {
 
     
     /**
-     * Saves or removes a recipe as a favorite for a user.
+     * Saves or removes a recipe as a favorite for the user based on the provided token, recipe ID, and action,
+     * and returns the result as a JSON response.
+     * @param ctx The Javalin HTTP context.
      */
     public void favoriteRecipes(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
@@ -476,7 +491,9 @@ public class UserAccessMethods {
 
     
     /**
-     * Manages the follow/unfollow action between users.
+     * Manages the follow or unfollow action between users based on the provided token, user ID, and action,
+     * and returns the result as a JSON response.
+     * @param ctx The Javalin HTTP context.
      */
     public void userFollow(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
@@ -514,7 +531,9 @@ public class UserAccessMethods {
 
     
     /**
-     * Retrieves all favorite recipes for the user.
+     * Retrieves all favorite recipes for the user based on the provided token
+     * and returns the result as a JSON response.
+     * @param ctx The Javalin HTTP context. 
      */
     public void getFavoriteRecipes(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
@@ -544,6 +563,14 @@ public class UserAccessMethods {
         LOGGER.info("------------------------------------------------- End of request -------------------------------------------------");
     }
     
+    /**
+     *
+     * Modifies the user's password based on the provided token, old password,
+     * and new password.
+     * Returns the result of the modification as a JSON response.
+     *
+     * @param ctx The Javalin HTTP context.
+     */
     public void modifyPassword(io.javalin.http.Context ctx) {
         LOGGER.info("------------------------------------------------- New request -------------------------------------------------");
         LOGGER.info("Receiving HTTP POST request on the route: {}", ctx.path());

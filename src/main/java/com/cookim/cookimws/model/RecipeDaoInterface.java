@@ -98,35 +98,102 @@ public interface RecipeDaoInterface {
      */
     public List<Step> findAllStepsByRecipe(String id);
 
+    /**
+     *
+     * Finds a recipe based on the user token and the recipe object provided.
+     *
+     * @param token The user token.
+     * @param recipe The recipe object.
+     * @return The found recipe.
+     */
     public Recipe findRecipeByUserTokenAndRecipe(String token, Recipe recipe);
-    // This method finds a recipe based on the user token and the recipe object provided.
 
+    /**
+     *
+     * Sets the path of the image associated with a recipe identified by its ID.
+     *
+     * @param id The ID of the recipe.
+     * @param pathImage The path of the image.
+     * @return True if the path image was set successfully, false otherwise.
+     */
     public boolean setRecipePathImage(long id, String pathImage);
-    // This method sets the path of the image associated with a recipe identified by its ID.
 
+    /**
+     *
+     * Retrieves the number of likes for a specific recipe identified by its ID.
+     *
+     * @param id_recipe The ID of the recipe.
+     * @return The number of likes for the recipe.
+     */
     public int getNumLikes(String id_recipe);
-    // This method retrieves the number of likes for a specific recipe identified by its ID.
 
+    /**
+     *
+     * Updates the number of likes for a specific recipe identified by its ID.
+     *
+     * @param id_recipe The ID of the recipe.
+     * @param numLikes The new number of likes for the recipe.
+     * @return True if the likes were updated successfully, false otherwise.
+     */
     public boolean updateLikes(String id_recipe, int numLikes);
-    // This method updates the number of likes for a specific recipe identified by its ID.
 
+    /**
+     *
+     * Adds a new step to a recipe.
+     *
+     * @param step The new step to be added.
+     * @return True if the step was added successfully, false otherwise.
+     */
     public boolean addStepsRecipe(Step step);
-    // This method adds a new step to a recipe.
 
+    /**
+     *
+     * Finds a step by its corresponding step object.
+     *
+     * @param step The step object.
+     * @return The found step.
+     */
     public Step findStepbyStep(Step step);
-    // This method finds a step by its corresponding step object.
 
+    /**
+     *
+     * Sets the path of the image associated with a step identified by its ID.
+     *
+     * @param id_step The ID of the step.
+     * @param path_image The path of the image.
+     * @return True if the path image was set successfully, false otherwise.
+     */
     public boolean setStepPathImage(long id_step, String path_image);
-    // This method sets the path of the image associated with a step identified by its ID.
 
+    /**
+     *
+     * Links an ingredient to a recipe, identified by the ingredient and the
+     * recipe ID.
+     *
+     * @param ingredient The ingredient to be linked.
+     * @param idRecipe The ID of the recipe.
+     * @return True if the ingredient was linked successfully, false otherwise.
+     */
     public boolean linkIngredientToRecipe(Ingredient ingredient, long idRecipe);
-    // This method links an ingredient to a recipe, identified by the ingredient and the recipe ID.
 
+    /**
+     *
+     * Searches for recipes that contain the provided text in their title or
+     * description.
+     *
+     * @param text The text to search for.
+     * @return A list of recipes matching the search criteria.
+     */
     public List<Recipe> searchRecipesLikeText(String text);
-    // This method searches for recipes that contain the provided text in their title or description.
 
+    /**
+     *
+     * Adds a new comment to a recipe.
+     *
+     * @param comment The new comment to be added.
+     * @return True if the comment was added successfully, false otherwise.
+     */
     public boolean addNewComment(Comment comment);
-    // This method adds a new comment to a recipe.
 
     /**
      *
@@ -147,7 +214,6 @@ public interface RecipeDaoInterface {
      * @return True if the steps were successfully deleted, false otherwise.
      */
     public boolean deleteStepsByRecipe(long id_recipe);
-    
 
     /**
      *
@@ -157,7 +223,6 @@ public interface RecipeDaoInterface {
      * @return True if the likes were successfully deleted, false otherwise.
      */
     public boolean deleteLikesFromRecipe(long id_recipe);
-
 
     /**
      *
@@ -169,7 +234,6 @@ public interface RecipeDaoInterface {
      * otherwise.
      */
     public boolean deleteRecipesSaved(long id_recipe);
-
 
     /**
      *
@@ -190,11 +254,62 @@ public interface RecipeDaoInterface {
      * @return True if the user has saved the recipe, false otherwise.
      */
     public boolean existsUserRecipeSaved(long id_user, long id_recipe);
-    
+
+    /**
+     *
+     * Retrieves the recipes followed by a user.
+     *
+     * @param id_user The ID of the user.
+     * @return A list of recipes followed by the user.
+     */
     public List<Recipe> getUserFollowedsRecipes(long id_user);
-    public List<Comment> findAllChildComments(String id_recipe,String id_parent_comment);
+
+    /**
+     *
+     * Finds all child comments of a specific recipe and parent comment.
+     *
+     * @param id_recipe The ID of the recipe.
+     * @param id_parent_comment The ID of the parent comment.
+     * @return A list of child comments.
+     */
+    public List<Comment> findAllChildComments(String id_recipe, String id_parent_comment);
+
+    /**
+     *
+     * Finds a category by its name.
+     *
+     * @param category_name The name of the category.
+     * @return The found category.
+     */
     public Category findCategoryByName(String category_name);
-    public boolean linkCategoryToRecipe(long id_category,long id_recipe);
+
+    /**
+     *
+     * Links a category to a recipe, identified by the category ID and the
+     * recipe ID.
+     *
+     * @param id_category The ID of the category.
+     * @param id_recipe The ID of the recipe.
+     * @return True if the category was linked successfully, false otherwise.
+     */
+    public boolean linkCategoryToRecipe(long id_category, long id_recipe);
+
+    /**
+     *
+     * Searches for recipes belonging to a specific category.
+     *
+     * @param category_name The name of the category.
+     * @return A list of recipes from the category.
+     */
     public List<Recipe> searchRecipesFromCategory(String category_name);
+
+    /**
+     *
+     * Deletes categories linked to a recipe.
+     *
+     * @param id_recipe The ID of the recipe.
+     * @return True if the categories were deleted successfully, false
+     * otherwise.
+     */
     public boolean deleteCategoriesToRecipe(long id_recipe);
 }
